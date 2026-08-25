@@ -152,7 +152,12 @@ button.danger { color: var(--bad); border-color: var(--bad); }
   min-height: var(--dp-tap);
   font-size: 14px;
 }
-.switch-row input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); }
+.switch-row input[type="checkbox"] { width: 24px; height: 24px; flex-shrink: 0; accent-color: var(--accent); }
+/* 체크박스 자체는 작아도 라벨 전체가 눌리도록 — 손가락으로 겨냥하기 쉽게 */
+.switch-row > label { display: flex; align-items: center; min-height: var(--dp-tap); cursor: pointer; }
+
+/* 꼬리말 링크도 손가락 크기를 지킨다 */
+footer a { display: inline-flex; align-items: center; min-height: var(--dp-tap); }
 
 /* --- 표 --- */
 

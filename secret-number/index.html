@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>시크릿 넘버 — 진행자 도구</title>
+<meta name="description" content="데블스 플랜 「시크릿 넘버」 수업 진행자 도구 — 고유번호 배정 · 콘택트룸 단서 · 채점" />
+<link rel="stylesheet" href="../common/theme.css" />
+<link rel="stylesheet" href="../common/app.css" />
+<style>
+  /* 이 게임에만 있는 것 */
+  .secret-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 8px;
+  }
+  .secret-cell {
+    border: 1px solid var(--border);
+    border-radius: var(--dp-radius-sm);
+    background: var(--panel-2);
+    padding: 8px 10px;
+    text-align: center;
+  }
+  .secret-cell .team { font-size: 11px; color: var(--text-dim); font-weight: 700; }
+  .secret-cell .num { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+  .secret-cell input { width: 100%; text-align: center; font-size: 20px; font-weight: 700; }
+
+  .ticket-cell { display: inline-flex; align-items: center; gap: 4px; }
+  .ticket-cell .n { min-width: 18px; font-weight: 700; }
+
+  .clue-history mark {
+    background: var(--accent-bg);
+    color: var(--accent);
+    border-radius: 4px;
+    padding: 0 4px;
+    font-weight: 700;
+  }
+  .kind-pick { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+  .kind-btn {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+    min-height: 60px; padding: 8px 12px; text-align: left; line-height: 1.35;
+  }
+  .kind-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  .kind-btn .k-name { font-size: 15px; font-weight: 800; }
+  .kind-btn .k-desc { font-size: 11px; opacity: 0.85; font-weight: 500; white-space: normal; }
+
+  .score-table td.pos { color: var(--ok); font-weight: 700; }
+  .score-table td.neg { color: var(--bad); font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="app-header">
+    <h1>시크릿 넘버</h1>
+    <span class="sub">진행자 도구 · 모티브: 캐치 더 넘버</span>
+    <span class="spacer"></span>
+    <a class="dp-backlink" href="../">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>게임 목록
+    </a>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab-btn" role="tab" aria-selected="true" data-page="setup">① 설정</button>
+    <button class="tab-btn" role="tab" aria-selected="false" data-page="contact">② 콘택트룸</button>
+    <button class="tab-btn" role="tab" aria-selected="false" data-page="tickets">③ 티켓</button>
+    <button class="tab-btn" role="tab" aria-selected="false" data-page="scoring">④ 채점</button>
+  </div>
+
+  <!-- ══ ① 설정 ══════════════════════════════════════════════ -->
+  <section class="panel-page" id="page-setup">
+    <div class="box">
+      <h2>게임 설정</h2>
+      <div class="row">
+        <div class="field">
+          <label for="teamCount">팀 수</label>
+          <input type="number" id="teamCount" min="2" max="20" value="10" style="width:96px">
+        </div>
+        <div class="field">
+          <label for="numMin">번호 최솟값</label>
+          <input type="number" id="numMin" min="0" max="999" value="1" style="width:96px">
+        </div>
+        <div class="field">
+          <label for="numMax">번호 최댓값</label>
+          <input type="number" id="numMax" min="1" max="999" value="100" style="width:96px">
+        </div>
+        <button class="primary" id="btnAssign">무작위로 번호 배정</button>
+      </div>
+      <div class="switch-row">
+        <input type="checkbox" id="bucketSum" checked>
+        <label for="bucketSum">합이 20 이하 / 180 이상이면 정확한 수 대신 「20 이하」 「180 이상」으로 공개</label>
+      </div>
+      <p class="hint">원본 카드 설명(<code>20 이하 = 3~20</code>, <code>180 이상 = 180~199</code>)을 그대로 옮긴 규칙입니다.
+        극단적인 합이 바로 답을 알려 주는 것을 막습니다. 끄면 언제나 정확한 합을 공개합니다.</p>
+    </div>
+
+    <div class="box">
+      <h2>고유번호 <span id="secretMaskState" style="font-weight:600"></span></h2>
+      <div class="row" style="margin-bottom:10px">
+        <button id="btnToggleMask">번호 보기</button>
+        <button id="btnManual">직접 입력</button>
+        <span id="setupWarn"></span>
+      </div>
+      <div class="secret-grid masked" id="secretGrid"></div>
+      <p class="hint">학생에게 화면을 보여 줄 때는 <b>번호 가리기</b> 상태로 두세요.
+        진행 중 새로 고쳐도 이 브라우저에 저장되어 그대로 이어집니다.</p>
+    </div>
+
+    <div class="box">
+      <h2>게임 초기화</h2>
+      <button class="danger" id="btnReset">전부 지우고 새 게임</button>
+      <p class="hint">번호·티켓·단서 기록·추측이 모두 지워집니다.</p>
+    </div>
+  </section>
+
+  <!-- ══ ② 콘택트룸 ══════════════════════════════════════════ -->
+  <section class="panel-page" id="page-contact" hidden>
+    <div class="box">
+      <h2>콘택트룸 — 두 팀이 같은 종류의 티켓을 1장씩 냅니다</h2>
+      <div class="row">
+        <div class="field">
+          <label for="teamA">팀 A</label>
+          <select id="teamA"></select>
+        </div>
+        <div class="field">
+          <label for="teamB">팀 B</label>
+          <select id="teamB"></select>
+        </div>
+      </div>
+      <div class="kind-pick" id="kindPick" style="margin-top:12px"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="primary" id="btnReveal">단서 공개</button>
+        <span id="contactMsg"></span>
+      </div>
+    </div>
+
+    <div class="bigscreen" id="clueScreen" hidden>
+      <div class="label" id="clueLabel"></div>
+      <div class="value" id="clueValue"></div>
+      <div class="detail" id="clueDetail"></div>
+    </div>
+
+    <div class="box">
+      <h2>단서 기록 <span style="font-weight:600;color:var(--text-dim)">(진행자만 보세요 — 계산 근거가 들어 있습니다)</span></h2>
+      <div class="row" style="margin-bottom:8px">
+        <button class="small" id="btnToggleLogDetail">계산 근거 보기</button>
+      </div>
+      <div class="log" id="clueLog"></div>
+    </div>
+  </section>
+
+  <!-- ══ ③ 티켓 ══════════════════════════════════════════════ -->
+  <section class="panel-page" id="page-tickets" hidden>
+    <div class="box">
+      <h2>팀별 티켓과 피스</h2>
+      <p class="hint" style="margin:0 0 10px">
+        티켓은 팀끼리 양도할 수 있습니다 — 아래에서 직접 고쳐 주세요.
+        피스 2개로 티켓 한 세트를 더 살 수 있고, <b>팀당 한 번</b>뿐입니다.
+      </p>
+      <div class="table-scroll">
+        <table id="ticketTable"></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ ④ 채점 ══════════════════════════════════════════════ -->
+  <section class="panel-page" id="page-scoring" hidden>
+    <div class="box">
+      <h2>정답지 입력 — 각 팀이 적어 낸 추측</h2>
+      <p class="hint" style="margin:0 0 10px">
+        가로줄이 <b>추측한 팀</b>, 세로줄이 <b>추측 대상 팀</b>입니다.
+        빈칸으로 두면 「답을 적지 않음」이 되어 감점되지 않습니다.
+      </p>
+      <div class="table-scroll">
+        <table id="guessTable"></table>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button class="primary" id="btnScore">채점하기</button>
+        <button id="btnClearGuess">추측 전부 지우기</button>
+      </div>
+    </div>
+
+    <div class="box" id="resultBox" hidden>
+      <h2>결과</h2>
+      <div class="table-scroll">
+        <table class="score-table" id="resultTable"></table>
+      </div>
+      <p class="hint">
+        자기 번호 맞히면 +5 / 틀리면 −5 · 다른 팀 맞히면 +1 / 틀리면 −1 ·
+        모든 팀을 다 맞히면 보너스 +5 · 내 번호를 맞힌 팀 1팀당 −1 · 빈칸은 감점 없음
+      </p>
+    </div>
+  </section>
+
+  <footer style="margin-top:32px;padding-top:14px;border-top:1px solid var(--border);font-size:12px;color:var(--text-dim)">
+    <a href="test.html" style="color:var(--accent)">자체 검증 페이지</a>
+  </footer>
+
+</div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
