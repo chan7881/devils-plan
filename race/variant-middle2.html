@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중간 달리기 (Middle Runner) - 웹앱 게임</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --primary-color: #4a90e2;
+            --danger-color: #e24a4a;
+            --success-color: #2ecc71;
+            --dark-color: #2c3e50;
+            --accent-color: #f1c40f;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--dark-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        header {
+            grid-column: span 2;
+            text-align: center;
+            background: linear-gradient(135deg, var(--dark-color), #34495e);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 { margin: 0; font-size: 24px; }
+        .rule-summary { font-size: 13px; color: #ccc; margin-top: 5px; }
+
+        /* 메인 레이싱 판 */
+        .board-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .track-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .track {
+            display: flex;
+            align-items: center;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 5px;
+            position: relative;
+        }
+
+        .track.current-turn {
+            border: 2px solid var(--primary-color);
+            background: #eef5fc;
+        }
+
+        .team-info {
+            width: 120px;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .character-skill {
+            font-size: 11px;
+            color: #7f8c8d;
+        }
+
+        .lane {
+            flex-grow: 1;
+            height: 30px;
+            background: repeating-linear-gradient(90deg, #eee, #eee 1px, transparent 1px, transparent 4%);
+            position: relative;
+            border-left: 2px solid #ccc;
+            border-right: 4px double var(--danger-color);
+        }
+
+        .runner {
+            position: absolute;
+            top: 2px;
+            left: 0%;
+            width: 26px;
+            height: 26px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            transition: left 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .runner.goal {
+            background-color: #7f8c8d !important;
+            animation: none;
+        }
+
+        /* 컨트롤러 구역 */
+        .control-panel {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        /* [추가] 특수능력 가이드 설명 박스 */
+        .skill-explain-box {
+            background-color: #fff;
+            border-left: 5px solid var(--accent-color);
+            padding: 12px;
+            margin: 12px 0;
+            border-radius: 4px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .skill-explain-title {
+            font-weight: bold;
+            font-size: 14px;
+            color: #d35400;
+            margin-bottom: 4px;
+        }
+
+        .skill-explain-desc {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        .card-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .card {
+            width: 50px;
+            height: 70px;
+            background: white;
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s, border-color 0.1s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+        }
+
+        .skill-btn {
+            background-color: var(--dark-color);
+            color: white;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+            width: 100%;
+            font-size: 14px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: background 0.2s;
+        }
+
+        .skill-btn:hover {
+            background-color: #34495e;
+        }
+
+        /* 우측 순위판 및 상황판 */
+        .status-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .rank-box, .log-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .rank-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        .rank-item.win-zone { background-color: #e8f8f5; color: var(--success-color); font-weight: bold; }
+        .rank-item.lose-zone { background-color: #fdebd0; color: var(--danger-color); }
+
+        .log-list {
+            height: 220px;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.6;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #eee;
+        }
+
+        /* 모달 팝업 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .target-select {
+            padding: 8px;
+            margin: 10px 0;
+            width: 100%;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>🏃‍♂️ 중간 달리기 (Middle Runner) </h1>
+        <div class="rule-summary">1등과 꼴찌는 탈락합니다! 중간 순위(2등~9등)를 유지하여 승리하세요. 카드를 다 쓰면 자동 리셋됩니다.</div>
+    </header>
+
+    <!-- 레이싱 보드 구역 -->
+    <main class="board-section">
+        <div class="track-container" id="trackContainer">
+            <!-- 자바스크립트로 10개 트랙 생성 -->
+        </div>
+
+        <!-- 플레이어 컨트롤러 -->
+        <div class="control-panel" id="controlPanel">
+            <h3 id="currentTurnTitle">턴 정보 로딩중...</h3>
+            
+            <!-- [추가된 실시간 캐릭터 능력 설명 레이아웃] -->
+            <div class="skill-explain-box">
+                <div class="skill-explain-title" id="currentSkillTitle">⚡ 능력명: 정보 로딩중</div>
+                <div class="skill-explain-desc" id="currentSkillDesc">설명: 정보를 불러오고 있습니다.</div>
+            </div>
+
+            <button class="skill-btn" id="skillBtn" onclick="openSkillModal()">⚡ 위의 특수 능력 발동하기</button>
+            <hr style="border: 0; height: 1px; background: #ccc; margin: 15px 0;">
+            
+            <div style="font-size: 13px; color:#666; font-weight: bold; margin-bottom: 5px;">일반 이동 (카드 한 장 클릭):</div>
+            <div class="card-container" id="cardContainer">
+                <!-- 카드 렌더링 구역 -->
+            </div>
+        </div>
+    </main>
+
+    <!-- 실시간 정보 구역 -->
+    <aside class="status-section">
+        <!-- 실시간 순위표 -->
+        <div class="rank-box">
+            <h3>📊 실시간 순위 (목표: 중간 유지)</h3>
+            <div id="rankList">
+                <!-- 순위 실시간 업데이트 -->
+            </div>
+        </div>
+
+        <!-- 게임 로그 -->
+        <div class="log-box">
+            <h3>📜 경기 중계 (로그)</h3>
+            <div class="log-list" id="logList"></div>
+        </div>
+    </aside>
+</div>
+
+<!-- 타겟 선택 모달 -->
+<div class="modal" id="skillModal">
+    <div class="modal-content">
+        <h3 id="modalSkillName">능력 발동</h3>
+        <p id="modalSkillDesc">대상을 지정해 주세요.</p>
+        <select id="targetSelect" class="target-select"></select>
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button class="skill-btn" style="background:#2ecc71; margin-top:0;" onclick="useCharacterSkill()">발동 확정</button>
+            <button class="skill-btn" style="background:#e74c3c; margin-top:0;" onclick="closeModal()">취소</button>
+        </div>
+    </div>
+</div>
+
+<!-- 게임 결과 모달 -->
+<div class="modal" id="resultModal">
+    <div class="modal-content" style="max-width: 600px;">
+        <h2>🏁 게임 종료! 최종 결과 🏁</h2>
+        <div id="finalRankResult" style="text-align: left; margin: 20px 0; max-height: 300px; overflow-y:auto;"></div>
+        <button class="skill-btn" style="background:var(--primary-color);" onclick="location.reload()">새 게임 시작하기</button>
+    </div>
+</div>
+
+<script>
+    // 1. 게임 기본 데이터 정의 (10개 팀과 특수 능력)
+    const characters = [
+        { id: 1, name: "브레이커", skill: "제자리 정지", desc: "자신의 숫자 카드 중 하나를 선택해 버리는 대신, 한 칸도 움직이지 않고 제자리에 멈춥니다. 전진하면 등수가 올라 위험할 때 유용합니다.", type: "self_card" },
+        { id: 2, name: "체인저", skill: "스피드 복사", desc: "바로 직전 턴의 플레이어가 이동했던 칸수만큼 똑같이 이동합니다. 주위 눈치를 보며 페이스를 맞출 때 씁니다.", type: "instant" },
+        { id: 3, name: "섀도우", skill: "중간 동기화", desc: "카드를 소모하지 않고, 현재 전체 순위에서 '딱 5등'인 유저의 바로 뒤 칸으로 즉시 순간이동하여 완벽한 안정권에 안착합니다.", type: "instant" },
+        { id: 4, name: "푸셔", skill: "앞으로 밀기", desc: "자신보다 뒤에 처져 있는 플레이어 중 1명을 강제로 지목하여 앞으로 1칸 밀어버립니다. 꼴찌 추격을 유도할 때 좋습니다.", type: "target" },
+        { id: 5, name: "풀러", skill: "뒤로 당기기", desc: "자신보다 앞에 치고 나간 플레이어 중 1명을 지목해 뒤로 1칸 끌어당깁니다. 선두 그룹을 견제하여 순위를 떨어뜨릴 때 효과적입니다.", type: "target" },
+        { id: 6, name: "그래비티", skill: "광역 중력", desc: "필드에 강력한 중력을 적용하여, 다음 조작할 팀의 카드 이동 거리를 무조건 -1칸 감소시킵니다. (최소 0칸)", type: "instant" },
+        { id: 7, name: "부스터", skill: "추격 가속", desc: "현재 전체 1등과 자신과의 남은 거리(칸 수)만큼 보너스로 한 번에 폭발적 질주를 합니다. (단, 본인이 1등일 때는 작동 불가)", type: "instant" },
+        { id: 8, name: "미러", skill: "숫자 반전", desc: "이번 차례에 제출할 카드의 효과를 거꾸로 뒤집습니다. (1은 4로, 2는 3으로, 3은 2로, 4는 1로 대칭 변환하여 적용)", type: "self_card" },
+        { id: 9, name: "트릭스터", skill: "강제 리셋", desc: "현재 손에 남아있는 패가 마음에 들지 않을 때, 남은 카드를 전부 파기하고 1, 2, 3, 4 카드를 새로 즉시 충전받습니다.", type: "instant" },
+        { id: 10, name: "스토퍼", skill: "이동 제약", desc: "원하는 플레이어 1명을 저격하여, 그 플레이어가 다음 차례를 맞이했을 때 가장 멀리 가는 '4번 카드'를 아예 내지 못하도록 봉인합니다.", type: "target" }
+    ];
+
+    const colors = ["#ff5722", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5", "#00bcd4", "#4caf50", "#e67e22", "#795548", "#607d8b"];
+
+    let gameState = {
+        players: [],
+        currentTurnIdx: 0,
+        lastTargetedId: null, 
+        lastMovedAmount: 2,   
+        gravityActive: false, 
+        gameEnded: false,
+        goalCount: 0
+    };
+
+    const GOAL_POSITION = 30; 
+
+    function initGame() {
+        gameState.players = characters.map((char, index) => ({
+            id: char.id,
+            name: `팀 ${index + 1} (${char.name})`,
+            skillName: char.skill,
+            skillDesc: char.desc,
+            skillType: char.type,
+            color: colors[index],
+            position: 0,
+            cards: [1, 2, 3, 4], 
+            isGoal: false,
+            debuff: null        
+        }));
+
+        renderTracks();
+        updateUI();
+        logMessage("🏎️ 게임 시작! 1등과 꼴찌를 피해 황금 벨런스 '중간' 순위를 유지하세요!");
+    }
+
+    function renderTracks() {
+        const container = document.getElementById("trackContainer");
+        container.innerHTML = "";
+        
+        gameState.players.forEach(p => {
+            const track = document.createElement("div");
+            track.className = `track` ;
+            track.id = `track-${p.id}`;
+            
+            track.innerHTML = `
+                <div class="team-info">
+                    <span>${p.name}</span>
+                    <span class="character-skill">⚡ ${p.skillName}</span>
+                </div>
+                <div class="lane">
+                    <div class="runner" id="runner-${p.id}" style="background-color: ${p.color}; left: 0%;">
+                        ${p.id}
+                    </div>
+                </div>
+            `;
+            container.appendChild(track);
+        });
+    }
+
+    function updateUI() {
+        if (gameState.gameEnded) return;
+
+        // 트랙 하이라이트
+        gameState.players.forEach((p, idx) => {
+            const track = document.getElementById(`track-${p.id}`);
+            if (idx === gameState.currentTurnIdx) {
+                track.classList.add("current-turn");
+            } else {
+                track.classList.remove("current-turn");
+            }
+
+            const runner = document.getElementById(`runner-${p.id}`);
+            const percent = Math.min((p.position / GOAL_POSITION) * 100, 100);
+            runner.style.left = `${percent}%`;
+            
+            if (p.isGoal) {
+                runner.classList.add("goal");
+                runner.innerText = "🏁";
+            }
+        });
+
+        const currentPlayer = gameState.players[gameState.currentTurnIdx];
+        document.getElementById("currentTurnTitle").innerText = `▶ 현재 차례: ${currentPlayer.name}`;
+        
+        // [업데이트] 컨트롤러 내에 현재 팀의 특수능력 정보 출력
+        document.getElementById("currentSkillTitle").innerText = `⚡ 고유 능력: [${currentPlayer.skillName}]`;
+        document.getElementById("currentSkillDesc").innerText = currentPlayer.skillDesc;
+
+        // 카드 렌더링
+        const cardContainer = document.getElementById("cardContainer");
+        cardContainer.innerHTML = "";
+        currentPlayer.cards.forEach(num => {
+            const card = document.createElement("div");
+            card.className = "card";
+            if (currentPlayer.debuff === "stop4" && num === 4) {
+                card.style.background = "#e74c3c";
+                card.style.color = "white";
+                card.style.cursor = "not-allowed";
+                card.onclick = () => alert("스토퍼의 방해 공작으로 이번 턴엔 4번 카드를 사용할 수 없습니다!");
+            } else {
+                card.onclick = () => playCard(num);
+            }
+            card.innerText = num;
+            cardContainer.appendChild(card);
+        });
+
+        calculateRankings();
+    }
+
+    function calculateRankings() {
+        let ranked = [...gameState.players].sort((a, b) => b.position - a.position || a.id - b.id);
+        const rankList = document.getElementById("rankList");
+        rankList.innerHTML = "";
+
+        ranked.forEach((p, index) => {
+            const item = document.createElement("div");
+            item.className = "rank-item";
+            
+            if (index === 0 || index === 9) {
+                item.classList.add("lose-zone");
+            } else {
+                item.classList.add("win-zone");
+            }
+
+            item.innerHTML = `
+                <span><strong>${index + 1}등</strong> - ${p.name}</span>
+                <span>${p.isGoal ? "골인!" : p.position + "칸"}</span>
+            `;
+            rankList.appendChild(item);
+        });
+
+        return ranked;
+    }
+
+    function playCard(num, modifier = null) {
+        const player = gameState.players[gameState.currentTurnIdx];
+        player.cards = player.cards.filter(c => c !== num);
+
+        let moveAmount = num;
+
+        if (modifier === "mirror") {
+            moveAmount = {1:4, 2:3, 3:2, 4:1}[num];
+            logMessage(`🔮 [미러 반전] 카드 ${num}이(가) 뒤집혀 ${moveAmount}칸 이동합니다.`);
+        } else if (modifier === "breaker") {
+            moveAmount = 0;
+            logMessage(`🛑 [브레이커] 카드를 파기하고 자리에 그대로 멈췄습니다.`);
+        }
+
+        if (gameState.gravityActive && moveAmount > 0) {
+            moveAmount = Math.max(0, moveAmount - 1);
+            logMessage(`🌀 [중력장 패널티] 이동 거리가 1칸 줄어들었습니다.`);
+            gameState.gravityActive = false; 
+        }
+
+        executeMove(player, moveAmount);
+        
+        player.debuff = null; 
+        if (player.cards.length === 0) {
+            player.cards = [1, 2, 3, 4];
+            logMessage(`🔄 ${player.name}의 카드 세트가 자동 충전(리셋)되었습니다.`);
+        }
+
+        nextTurn();
+    }
+
+    function executeMove(player, amount) {
+        if (player.isGoal) return;
+
+        player.position += amount;
+        gameState.lastMovedAmount = amount; 
+        logMessage(`🏃‍♂️ ${player.name} 전진 ➡️ +${amount}칸 (현재 위치: ${player.position}칸)`);
+
+        if (player.position >= GOAL_POSITION) {
+            player.position = GOAL_POSITION;
+            player.isGoal = true;
+            gameState.goalCount++;
+            logMessage(`🏁 🎉 ${player.name} 골인지점 통과!! 고유 능력이 봉인됩니다.`);
+            
+            if (gameState.goalCount >= 3) {
+                endGame();
+            }
+        }
+    }
+
+    function nextTurn() {
+        if (gameState.gameEnded) return;
+
+        let loopCount = 0;
+        do {
+            gameState.currentTurnIdx = (gameState.currentTurnIdx + 1) % gameState.players.length;
+            loopCount++;
+        } while (gameState.players[gameState.currentTurnIdx].isGoal && loopCount < 10);
+
+        if (loopCount >= 10) {
+            endGame();
+            return;
+        }
+
+        updateUI();
+    }
+
+    function openSkillModal() {
+        const player = gameState.players[gameState.currentTurnIdx];
+        if (player.isGoal) {
+            alert("골인한 팀은 능력을 발동할 수 없습니다!");
+            return;
+        }
+
+        document.getElementById("modalSkillName").innerText = `⚡ [${player.name}] 능력 사용`;
+        document.getElementById("modalSkillDesc").innerText = player.skillDesc;
+
+        const select = document.getElementById("targetSelect");
+        select.innerHTML = "";
+
+        if (player.skillType === "target") {
+            select.style.display = "block";
+            gameState.players.forEach(p => {
+                if (p.id !== player.id && !p.isGoal && p.id !== gameState.lastTargetedId) {
+                    const opt = document.createElement("option");
+                    opt.value = p.id;
+                    opt.innerText = p.name + ` (${p.position}칸 위치)`;
+                    select.appendChild(opt);
+                }
+            });
+            if (select.children.length === 0) {
+                alert("현재 조건에 맞는 대상을 찾을 수 없습니다.");
+                return;
+            }
+        } else {
+            select.style.display = "none";
+            const opt = document.createElement("option");
+            opt.value = player.id;
+            opt.innerText = "자기 자신에게 즉시 사용";
+            select.appendChild(opt);
+        }
+
+        document.getElementById("skillModal").style.display = "flex";
+    }
+
+    function closeModal() {
+        document.getElementById("skillModal").style.display = "none";
+    }
+
+    function useCharacterSkill() {
+        const player = gameState.players[gameState.currentTurnIdx];
+        const targetId = parseInt(document.getElementById("targetSelect").value);
+        const target = gameState.players.find(p => p.id === targetId);
+
+        closeModal();
+
+        if (player.skillType === "target") {
+            gameState.lastTargetedId = targetId;
+        }
+
+        switch(player.id) {
+            case 1: 
+                const cardNumB = prompt(`버리고 제자리에 멈출 카드를 입력하세요 (${player.cards.join(', ')}):`);
+                const numB = parseInt(cardNumB);
+                if (player.cards.includes(numB)) {
+                    playCard(numB, "breaker");
+                } else {
+                    alert("잘못된 카드 번호입니다.");
+                }
+                break;
+
+            case 2: 
+                logMessage(`✨ [체인저] 능력을 씁니다! 이전 턴 변동값인 +${gameState.lastMovedAmount}칸 만큼 이동!`);
+                executeMove(player, gameState.lastMovedAmount);
+                nextTurn();
+                break;
+
+            case 3: 
+                let ranked = [...gameState.players].sort((a, b) => b.position - a.position);
+                let fifthPlace = ranked[4]; 
+                player.position = Math.max(0, fifthPlace.position - 1);
+                logMessage(`🔮 [섀도우] 5등(${fifthPlace.name})의 그림자 뒤 칸인 [${player.position}칸]으로 이동했습니다.`);
+                nextTurn();
+                break;
+
+            case 4: 
+                if (target.position < player.position) {
+                    target.position += 1;
+                    logMessage(`💥 [푸셔] ${target.name}을 앞으로 1칸 강제로 밀었습니다!`);
+                    updateUI();
+                    nextTurn();
+                } else {
+                    alert("나보다 뒤에 있는 팀만 밀 수 있습니다!");
+                }
+                break;
+
+            case 5: 
+                if (target.position > player.position) {
+                    target.position = Math.max(0, target.position - 1);
+                    logMessage(`🧲 [풀러] ${target.name}을 내 쪽으로 1칸 끌어당겼습니다!`);
+                    updateUI();
+                    nextTurn();
+                } else {
+                    alert("나보다 앞에 있는 팀만 당길 수 있습니다!");
+                }
+                break;
+
+            case 6: 
+                gameState.gravityActive = true;
+                logMessage(`🌌 [그래비티] 필드 중력 강화! 다음 차례 플레이어의 이동 거리가 1칸 감소합니다.`);
+                nextTurn();
+                break;
+
+            case 7: 
+                let topPlayer = [...gameState.players].sort((a, b) => b.position - a.position)[0];
+                if (topPlayer.id === player.id) {
+                    alert("당신이 1등이라 추진력을 얻을 대상이 없습니다!");
+                    return;
+                }
+                let bonus = topPlayer.position - player.position;
+                logMessage(`🚀 [부스터] 선두와의 거리차를 계산해 단숨에 +${bonus}칸 추가 질주합니다.`);
+                executeMove(player, bonus);
+                nextTurn();
+                break;
+
+            case 8: 
+                const cardNumM = prompt(`반전시켜 적용할 카드를 입력하세요 (${player.cards.join(', ')}):`);
+                const numM = parseInt(cardNumM);
+                if (player.cards.includes(numM)) {
+                    playCard(numM, "mirror");
+                } else {
+                    alert("보유하지 않은 카드입니다.");
+                }
+                break;
+
+            case 9: 
+                player.cards = [1, 2, 3, 4];
+                logMessage(`🃏 [트릭스터] 핸드의 패를 완전 파기하고 1~4 카드를 새로 채웠습니다.`);
+                updateUI();
+                break;
+
+            case 10: 
+                target.debuff = "stop4";
+                logMessage(`🔒 [스토퍼] ${target.name}의 다음 차례 4번 카드 사용을 완벽 차단했습니다.`);
+                nextTurn();
+                break;
+        }
+    }
+
+    function logMessage(msg) {
+        const logList = document.getElementById("logList");
+        const entry = document.createElement("div");
+        entry.innerText = msg;
+        logList.appendChild(entry);
+        logList.scrollTop = logList.scrollHeight; 
+    }
+
+    function endGame() {
+        gameState.gameEnded = true;
+        const finalRanked = calculateRankings();
+        
+        const modal = document.getElementById("resultModal");
+        const resultDiv = document.getElementById("finalRankResult");
+        resultDiv.innerHTML = "";
+
+        logMessage("🏁 레이스 완전 종료! 결과를 정산합니다.");
+
+        finalRanked.forEach((p, idx) => {
+            let winStatus = "";
+            let color = "black";
+            
+            if (idx === 0) {
+                winStatus = "❌ 1등 탈락 (패배)";
+                color = "red";
+            } else if (idx === 9) {
+                winStatus = "❌ 10등 꼴찌 탈락 (패배)";
+                color = "orange";
+            } else {
+                winStatus = "👑 승리! (중간 사수 완료)";
+                color = "green";
+            }
+
+            const resLine = document.createElement("div");
+            resLine.style.color = color;
+            resLine.style.padding = "6px";
+            resLine.style.fontSize = "16px";
+            resLine.style.borderBottom = "1px solid #eee";
+            resLine.innerHTML = `<strong>${idx + 1}위</strong>: ${p.name} - ${winStatus}`;
+            resultDiv.appendChild(resLine);
+        });
+
+        modal.style.display = "flex";
+    }
+
+    window.onload = initGame;
+</script>
+</body>
+</html>

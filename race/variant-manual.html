@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>중간 달리기 - 수동 진행자 버전</title>
+<style>
+:root{
+  --bg:#07111f;
+  --panel:#0e2035;
+  --panel2:#132b45;
+  --line:#284c6e;
+  --text:#f5fbff;
+  --muted:#9cc1d9;
+  --accent:#ffd166;
+  --green:#51e5a8;
+  --red:#ff6b7a;
+  --blue:#56b4ff;
+  --shadow:0 16px 38px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;background:var(--bg);color:var(--text)}
+body{
+  background:
+    radial-gradient(circle at 15% 0%,rgba(86,180,255,.18),transparent 30%),
+    radial-gradient(circle at 88% 5%,rgba(255,209,102,.13),transparent 28%),
+    linear-gradient(180deg,#06101d 0%,#0b1d31 100%);
+  overflow-x:hidden;
+}
+button,select,input{font:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.42}
+.app{max-width:1920px;margin:0 auto;padding:12px}
+.topbar{
+  min-height:78px;border:1px solid rgba(255,255,255,.12);border-radius:20px;
+  padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:14px;
+  background:linear-gradient(120deg,rgba(19,43,69,.96),rgba(8,25,43,.96));
+  box-shadow:var(--shadow);position:relative;overflow:hidden
+}
+.topbar:before{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.22;
+  background-image:
+    linear-gradient(90deg,transparent 49%,rgba(255,255,255,.3) 50%,transparent 51%),
+    linear-gradient(0deg,transparent 49%,rgba(255,255,255,.16) 50%,transparent 51%);
+  background-size:42px 42px
+}
+.brand{display:flex;align-items:center;gap:13px;position:relative;z-index:1}
+.logo{
+  width:52px;height:52px;border-radius:17px;display:grid;place-items:center;
+  background:linear-gradient(145deg,#ffd166,#ff9f43);box-shadow:0 8px 20px rgba(255,159,67,.25)
+}
+.logo svg{width:38px;height:38px}
+h1{font-size:26px;margin:0;letter-spacing:-1px}
+.subtitle{font-size:12px;color:var(--muted);margin-top:4px}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;position:relative;z-index:1}
+.btn{
+  border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:9px 12px;
+  color:white;background:#173451;font-weight:800;box-shadow:0 5px 12px rgba(0,0,0,.15)
+}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.btn.primary{background:linear-gradient(135deg,#2476ff,#2a9dff)}
+.btn.warn{background:linear-gradient(135deg,#d98b16,#f2b53a);color:#1c2430}
+.btn.danger{background:linear-gradient(135deg,#d84558,#ff6b7a)}
+.btn.success{background:linear-gradient(135deg,#1ba876,#51e5a8);color:#08251a}
+.btn.ghost{background:rgba(255,255,255,.06)}
+.layout{
+  display:grid;grid-template-columns:minmax(760px,1fr) 390px;gap:12px;margin-top:12px;align-items:start
+}
+.board{
+  border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:12px;
+  background:linear-gradient(180deg,rgba(14,32,53,.98),rgba(9,26,45,.98));box-shadow:var(--shadow)
+}
+.stadium{
+  border-radius:17px;padding:12px;background:
+    linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.04)),
+    repeating-linear-gradient(90deg,#153b5b 0,#153b5b 50px,#173f62 50px,#173f62 100px);
+  border:1px solid rgba(255,255,255,.09);position:relative;overflow:hidden
+}
+.stadium:before{
+  content:"";position:absolute;left:-4%;right:-4%;top:-52px;height:86px;border-radius:50%;
+  background:repeating-linear-gradient(90deg,#ff6b7a 0 26px,#ffd166 26px 52px,#56b4ff 52px 78px,#51e5a8 78px 104px);
+  opacity:.35;filter:blur(.4px)
+}
+.track-head{
+  display:grid;grid-template-columns:150px minmax(520px,1fr) 174px;gap:8px;
+  padding:0 6px 7px;color:#d8edfb;font-size:11px;font-weight:900;text-align:center
+}
+.lanes{display:flex;flex-direction:column;gap:5px;position:relative;z-index:2}
+.lane-row{
+  display:grid;grid-template-columns:150px minmax(520px,1fr) 174px;gap:8px;align-items:center;
+  min-height:56px;padding:5px 6px;border-radius:13px;border:1px solid rgba(255,255,255,.07);
+  background:linear-gradient(90deg,rgba(255,255,255,.035),rgba(255,255,255,.015));
+  transition:.2s
+}
+.lane-row.active{
+  outline:2px solid var(--accent);background:linear-gradient(90deg,rgba(255,209,102,.13),rgba(255,255,255,.02));
+  box-shadow:0 0 0 4px rgba(255,209,102,.05)
+}
+.team-meta{display:flex;align-items:center;gap:8px;min-width:0}
+.team-badge{
+  width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:none;
+  color:#fff;font-weight:1000;font-size:15px;border:2px solid rgba(255,255,255,.58);
+  box-shadow:0 5px 12px rgba(0,0,0,.22)
+}
+.team-lines{min-width:0}
+.team-name{font-weight:1000;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.team-skill{font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.track{
+  height:42px;border-radius:12px;position:relative;overflow:visible;
+  background:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.09) 0,rgba(255,255,255,.09) 1px,transparent 1px,transparent calc(100% / 30)),
+    linear-gradient(180deg,#253a4d 0 47%,#f6f7fb 47% 53%,#1c3145 53%);
+  border-left:4px solid #f3f8fb;border-right:7px double #ffea7a;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.09)
+}
+.track:after{
+  content:"🏁";position:absolute;right:-11px;top:50%;transform:translate(50%,-50%);font-size:22px;
+  filter:drop-shadow(0 3px 4px rgba(0,0,0,.35))
+}
+.runner{
+  position:absolute;top:50%;transform:translate(-50%,-50%);width:43px;height:43px;border-radius:50%;
+  display:grid;place-items:center;transition:left .22s ease;z-index:3;border:3px solid #fff;
+  box-shadow:0 7px 14px rgba(0,0,0,.34);user-select:none
+}
+.runner svg{width:29px;height:29px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2))}
+.runner.goal{box-shadow:0 0 0 5px rgba(255,209,102,.24),0 7px 14px rgba(0,0,0,.34)}
+.pos-label{
+  position:absolute;left:50%;bottom:-17px;transform:translateX(-50%);font-size:9px;font-weight:1000;
+  background:#06111e;border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:1px 5px;white-space:nowrap
+}
+.manual-controls{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.move-btn{
+  height:34px;border:0;border-radius:10px;font-weight:1000;color:white;box-shadow:0 5px 10px rgba(0,0,0,.18)
+}
+.move-btn.back{background:linear-gradient(135deg,#8349dd,#b068ff)}
+.move-btn.forward{background:linear-gradient(135deg,#0d9b70,#46d99f)}
+.finish-chip{
+  grid-column:1/-1;text-align:center;font-size:10px;font-weight:900;color:#ffd166;min-height:13px
+}
+.sidebar{display:flex;flex-direction:column;gap:12px}
+.panel{
+  border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:14px;
+  background:linear-gradient(180deg,rgba(19,43,69,.98),rgba(10,29,48,.98));box-shadow:var(--shadow)
+}
+.panel-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.panel-title h2{font-size:16px;margin:0}
+.turn-card{
+  border-radius:17px;padding:13px;background:
+    radial-gradient(circle at 90% 10%,rgba(255,209,102,.2),transparent 28%),
+    linear-gradient(135deg,#183d62,#102a47);
+  border:1px solid rgba(255,255,255,.11)
+}
+.current-team{font-size:22px;font-weight:1000;letter-spacing:-.8px}
+.current-skill{font-size:13px;font-weight:900;color:#ffd166;margin-top:6px}
+.skill-desc{font-size:11.5px;color:#c5ddec;line-height:1.5;margin-top:6px}
+.card-label{font-size:11px;color:var(--muted);font-weight:900;margin:11px 0 6px}
+.card-row{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.number-card{
+  min-height:64px;border-radius:13px;border:2px solid rgba(255,255,255,.55);
+  color:#102033;font-size:25px;font-weight:1000;position:relative;overflow:hidden;
+  background:linear-gradient(145deg,#fff,#dcefff);box-shadow:0 7px 14px rgba(0,0,0,.2)
+}
+.number-card:after{
+  content:"USE";position:absolute;right:-12px;bottom:3px;transform:rotate(-35deg);font-size:9px;opacity:.17
+}
+.number-card.used{
+  color:#6d7a86;background:repeating-linear-gradient(45deg,#25394b 0 7px,#2d4559 7px 14px);
+  border-color:#4d6477;text-decoration:line-through
+}
+.turn-actions{display:grid;grid-template-columns:1.3fr 1fr;gap:7px;margin-top:9px}
+.guide-btn{background:linear-gradient(135deg,#ef9b23,#ffd166);color:#172331}
+.next-btn{background:linear-gradient(135deg,#246ff3,#50b7ff)}
+.mini-cards{display:flex;align-items:center;gap:3px;margin-top:3px;min-height:15px}
+.mini-card{
+  width:18px;height:15px;border-radius:4px;display:grid;place-items:center;
+  background:#eef8ff;color:#102033;border:1px solid rgba(255,255,255,.72);
+  font-size:8px;font-weight:1000;line-height:1
+}
+.mini-card.used{
+  background:#263c50;color:#71879a;border-color:#3d566b;text-decoration:line-through;opacity:.58
+}
+.rank-list{display:flex;flex-direction:column;gap:5px;overflow:visible;padding-right:0;max-height:none}
+.rank-item{
+  display:grid;grid-template-columns:58px minmax(150px,1fr) 82px;align-items:center;gap:8px;
+  min-height:38px;padding:7px 10px;border-radius:10px;background:rgba(255,255,255,.055);
+  border:1px solid rgba(255,255,255,.08);font-size:15px;line-height:1.1
+}
+.rank-no{font-weight:1000;text-align:center;color:#ffd166;font-size:16px}
+.rank-name{font-weight:1000;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-pos{text-align:center;font-weight:1000;font-size:15px;color:#d9edfb}
+.rank-item.middle{border-color:#ffd166;background:rgba(255,209,102,.1)}
+.log{
+  height:170px;overflow:auto;border-radius:13px;padding:9px;background:#071522;border:1px solid rgba(255,255,255,.08);
+  font-size:10.5px;line-height:1.55;color:#c3dced
+}
+.log-entry{padding:4px 2px;border-bottom:1px dashed rgba(255,255,255,.07)}
+.log-entry:last-child{border-bottom:0}
+.helper{font-size:10px;color:var(--muted);line-height:1.45;margin-top:8px}
+.overlay{
+  display:none;position:fixed;inset:0;background:rgba(1,7,13,.78);backdrop-filter:blur(7px);
+  z-index:100;align-items:center;justify-content:center;padding:18px
+}
+.overlay.open{display:flex}
+.modal{
+  width:min(680px,96vw);max-height:92vh;overflow:auto;border-radius:22px;padding:20px;
+  background:linear-gradient(180deg,#173653,#0d2238);border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 30px 80px rgba(0,0,0,.55)
+}
+.modal h2{margin:0 0 10px;font-size:22px}
+.modal p{font-size:13px;line-height:1.6;color:#c8dfed}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.form-row{padding:8px;border-radius:12px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08)}
+.form-row label{display:block;font-size:10px;color:var(--muted);font-weight:900;margin-bottom:4px}
+.form-row input,.form-row select,.modal select{
+  width:100%;border:1px solid rgba(255,255,255,.15);border-radius:9px;padding:8px;color:white;background:#0a1b2c
+}
+.rules{font-size:12px;line-height:1.65;color:#d9ebf6}
+.rules strong{color:#ffd166}
+.result-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.result-group{border-radius:14px;padding:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+.result-group.win{grid-column:1/-1;border-color:#ffd166;background:rgba(255,209,102,.11)}
+.result-title{font-weight:1000;margin-bottom:6px}
+.result-teams{font-size:12px;color:#d8ebf7;line-height:1.6}
+.toast{
+  position:fixed;left:50%;bottom:20px;transform:translate(-50%,30px);opacity:0;pointer-events:none;
+  z-index:200;background:#05111d;border:1px solid rgba(255,255,255,.17);padding:10px 16px;border-radius:999px;
+  box-shadow:0 14px 28px rgba(0,0,0,.35);font-size:12px;font-weight:900;transition:.22s
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.expected{
+  margin-top:8px;border:1px dashed rgba(255,209,102,.48);border-radius:11px;padding:8px;
+  color:#ffe09a;font-size:11px;line-height:1.45;background:rgba(255,209,102,.06)
+}
+.small-actions{display:flex;gap:6px}
+.icon-btn{
+  min-width:35px;height:31px;border-radius:9px;border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);color:#fff;font-weight:900
+}
+@media(max-width:1250px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{display:grid;grid-template-columns:1fr 1fr}
+  .sidebar .panel:last-child{grid-column:1/-1}
+}
+@media(max-width:850px){
+  .app{padding:6px}.topbar{align-items:flex-start}.brand{align-items:flex-start}
+  h1{font-size:21px}.layout{margin-top:7px}.board{padding:6px}.stadium{padding:6px;overflow-x:auto}
+  .track-head,.lane-row{grid-template-columns:128px 520px 150px;min-width:814px}
+  .sidebar{display:flex}.form-grid,.result-grid{grid-template-columns:1fr}
+  .result-group.win{grid-column:auto}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 64 64">
+          <path d="M12 44c11-2 19-12 20-25l9 6-3 8 13 6c3 2 3 7-1 9-13 7-28 7-38-4Z" fill="#14324d"/>
+          <path d="M14 46c12 5 25 4 37-3" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+          <path d="M10 52h42" stroke="#14324d" stroke-width="5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1>중간 달리기 <span style="color:#ffd166">MANUAL</span></h1>
+        
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="btn ghost" id="undoBtn" onclick="undo()">↶ 실행 취소</button>
+      <button class="btn ghost" id="redoBtn" onclick="redo()">↷ 다시 실행</button>
+      <button class="btn ghost" onclick="openRules()">규칙</button>
+      <button class="btn success" onclick="showResult(false)">현재 결과</button>
+      <button class="btn danger" onclick="openSetup(true)">새 게임</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="board">
+      <div class="stadium">
+        <div class="track-head"><div>팀 / 초능력</div><div>30칸 레이스 트랙</div><div>수동 이동</div></div>
+        <div class="lanes" id="lanes"></div>
+      </div>
+    </section>
+
+    <aside class="sidebar">
+      <section class="panel">
+        <div class="panel-title">
+          <h2>🎮 현재 차례</h2>
+          <div class="small-actions">
+            <button class="icon-btn" onclick="previousTurn()" title="이전 팀">◀</button>
+            <button class="icon-btn" onclick="nextTurn()" title="다음 팀">▶</button>
+          </div>
+        </div>
+        <div class="turn-card">
+          <div class="current-team" id="currentTeam">팀 1</div>
+          <div class="current-skill" id="currentSkill"></div>
+          <div class="skill-desc" id="currentSkillDesc"></div>
+          <div class="card-label" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <span>이동 카드 — 누르면 숫자만큼 자동 전진합니다.</span>
+            <button class="icon-btn" id="manualResetBtn" onclick="manualCardReset()" title="현재 팀 카드 1·2·3·4 재충전">카드 리셋</button>
+          </div>
+          <div class="card-row" id="cardRow"></div>
+          <div class="turn-actions">
+            <button class="btn guide-btn" id="skillGuideBtn" onclick="openSkillGuide()">⚡ 초능력 안내</button>
+            <button class="btn next-btn" onclick="nextTurn()">다음 팀 ▶</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        
+        <div class="rank-list" id="rankList"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">
+          <h2>📝 진행 기록</h2>
+          <button class="icon-btn" onclick="clearLog()" title="기록 지우기">⌫</button>
+        </div>
+        <div class="log" id="log"></div>
+      </section>
+    </aside>
+  </main>
+</div>
+
+<div class="overlay" id="setupOverlay">
+  <div class="modal">
+    <h2>새 게임 설정</h2>
+    <p>팀 이름과 초능력을 확인하세요. <b>능력 섞기</b>를 누르면 10개 능력이 중복 없이 다시 배정됩니다.</p>
+    <div class="form-grid" id="setupGrid"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="shuffleSetupSkills()">🎲 능력 섞기</button>
+      <button class="btn ghost" id="setupCancelBtn" onclick="closeOverlay('setupOverlay')">취소</button>
+      <button class="btn primary" onclick="startGameFromSetup()">게임 시작</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="confirmOverlay">
+  <div class="modal" style="max-width:520px">
+    <h2 id="confirmTitle">확인</h2>
+    <p id="confirmText"></p>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="cancelConfirm()">취소</button>
+      <button class="btn primary" id="confirmYesBtn">확인</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="skillOverlay">
+  <div class="modal" style="max-width:570px">
+    <h2 id="skillModalTitle">초능력 안내</h2>
+    <p id="skillModalText"></p>
+    <div id="targetArea" style="display:none;margin-top:10px">
+      <label style="font-size:11px;font-weight:900;color:#9cc1d9">대상 팀 기록</label>
+      <select id="targetSelect"></select>
+    </div>
+    <div class="expected" style="margin-top:12px">
+      이 버튼은 능력을 자동 처리하지 않습니다. 확인 후 안내에 맞춰 카드 소모와 말 이동을 직접 조작하세요.
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeOverlay('skillOverlay')">취소</button>
+      <button class="btn guide-btn" onclick="confirmSkillGuide()">안내 확인 및 기록</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="rulesOverlay">
+  <div class="modal">
+    <h2>중간 달리기 규칙</h2>
+    <div class="rules">
+      <strong>1.</strong> 10개 팀은 각자 고유한 초능력 1개와 이동 카드 1·2·3·4를 가집니다.<br>
+      <strong>2.</strong> 자신의 차례에 카드 1장을 사용하면 카드 숫자만큼 말이 자동 전진합니다.<br>
+      <strong>3.</strong> 네 장을 모두 사용하면 카드 1·2·3·4가 자동으로 다시 충전됩니다.<br>
+      <strong>4.</strong> 초능력은 화면에서 효과를 안내하고 확인 기록만 남깁니다. 실제 적용은 진행자가 수동으로 처리합니다.<br>
+      <strong>5.</strong> 카드 교환·양도·임의 파기는 하지 않습니다. 골인한 팀의 능력은 더 이상 사용하지 않습니다.<br>
+      <strong>6.</strong> 결승선은 30칸이며, 9개 팀이 골인하면 게임이 종료됩니다.<br>
+      <strong>7.</strong> 최종 순위는 5·6위가 공동 1등, 4·7위가 공동 2등, 3·8위가 공동 3등, 2·9위가 공동 4등, 1·10위가 공동 5등입니다.<br>
+      <strong>8.</strong> 자동 이동 후 오류가 생기면 실행 취소/다시 실행 또는 팀별 앞·뒤 이동으로 바로잡습니다. 필요하면 카드 리셋으로 현재 팀의 카드를 1·2·3·4로 복구합니다.
+    </div>
+    <div class="modal-actions"><button class="btn primary" onclick="closeOverlay('rulesOverlay')">확인</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="resultOverlay">
+  <div class="modal">
+    <h2 id="resultTitle">현재 결과</h2>
+    <p id="resultSummary"></p>
+    <div class="result-grid" id="resultGrid"></div>
+    <div class="modal-actions"><button class="btn primary" onclick="closeOverlay('resultOverlay')">닫기</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const GOAL = 30;
+const TEAM_COLORS = ["#8b5cf6","#f97316","#22c55e","#3b82f6","#ef4444","#a16207","#ec4899","#64748b","#14b8a6","#eab308"];
+
+const SKILLS = [
+  {id:1,name:"브레이커",sub:"제자리 정지",type:"self",icon:"🛑",
+   desc:"카드 1장을 소모하지만 이동하지 않습니다.",
+   guide:"카드 1장을 실제로 소모한 뒤, 해당 팀의 말은 움직이지 마세요."},
+  {id:2,name:"체인저",sub:"스피드 복사",type:"self",icon:"✨",
+   desc:"직전 팀이 실제로 이동한 칸수만큼 이동합니다.",
+   guide:"직전 팀의 실제 이동 칸수를 확인한 뒤, 같은 칸수만큼 수동 전진시키세요. 그 후 이동 카드도 1장 소모합니다."},
+  {id:3,name:"섀도우",sub:"중간 동기화",type:"self",icon:"🌑",
+   desc:"현재 5등의 바로 한 칸 뒤로 이동합니다.",
+   guide:"현재 순위 5등의 위치를 확인하고, 그 팀보다 1칸 뒤 위치로 수동 조정하세요. 그 후 이동 카드도 1장 소모합니다."},
+  {id:4,name:"푸셔",sub:"앞으로 밀기",type:"target",icon:"💥",
+   desc:"자신보다 뒤에 있는 팀 1명을 앞으로 1칸 밉니다.",
+   guide:"대상 팀을 선택한 뒤 그 팀의 ▶ 앞으로 버튼을 1회 누르세요. 능력 사용 팀은 이동 카드도 1장 소모합니다."},
+  {id:5,name:"풀러",sub:"뒤로 당기기",type:"target",icon:"🧲",
+   desc:"자신보다 앞에 있는 팀 1명을 뒤로 1칸 당깁니다.",
+   guide:"대상 팀을 선택한 뒤 그 팀의 ◀ 뒤로 버튼을 1회 누르세요. 능력 사용 팀은 이동 카드도 1장 소모합니다."},
+  {id:6,name:"그래비티",sub:"광역 중력",type:"self",icon:"🌌",
+   desc:"바로 다음 팀의 실제 이동 거리를 1칸 줄입니다.",
+   guide:"다음 팀이 낸 카드 또는 능력 이동량에서 1칸을 빼고 수동 이동하세요. 최소 이동은 0칸입니다. 능력 사용 팀은 이동 카드도 1장 소모합니다."},
+  {id:7,name:"부스터",sub:"추격 가속",type:"self",icon:"🚀",
+   desc:"현재 선두와 자신의 거리만큼 추가 이동합니다.",
+   guide:"선두 위치와 현재 팀 위치의 차이를 계산해 그만큼 수동 전진시키세요. 현재 선두라면 사용할 수 없습니다. 그 후 이동 카드도 1장 소모합니다."},
+  {id:8,name:"미러",sub:"숫자 반전",type:"self",icon:"🪞",
+   desc:"이번 카드 숫자를 1↔4, 2↔3으로 바꿉니다.",
+   guide:"카드는 원래 숫자 카드를 소모하되, 실제 이동은 1→4칸, 2→3칸, 3→2칸, 4→1칸으로 수동 처리하세요."},
+  {id:9,name:"트릭스터",sub:"덱 리셋",type:"self",icon:"🃏",
+   desc:"현재 남은 카드를 버리고 1·2·3·4로 다시 채웁니다.",
+   guide:"아래 ‘카드 즉시 재충전’ 버튼을 사용해 해당 팀의 카드를 1·2·3·4로 되돌린 뒤, 이번 차례에 카드 1장을 소모하세요."},
+  {id:10,name:"스토퍼",sub:"4번 카드 봉인",type:"target",icon:"🔒",
+   desc:"대상 팀의 다음 차례 4번 카드 사용을 제한합니다.",
+   guide:"대상 팀을 기록하고, 그 팀의 다음 차례에는 4번 카드를 선택하지 않도록 안내하세요. 능력 사용 팀은 이동 카드도 1장 소모합니다."}
+];
+
+let state = null;
+let undoStack = [];
+let redoStack = [];
+let pendingConfirm = null;
+let setupSkills = SKILLS.map(s=>s.id);
+let toastTimer = null;
+
+function defaultState(){
+  const skillIds = shuffle([...SKILLS.map(s=>s.id)]);
+  return {
+    players:Array.from({length:10},(_,i)=>({
+      id:i+1,name:`팀 ${i+1}`,skillId:skillIds[i],position:0,cards:[1,2,3,4],
+      goalOrder:null,finishSeq:null
+    })),
+    currentTurn:0,
+    finishCounter:0,
+    logs:["🏁 새 게임이 시작되었습니다."],
+    expectedText:"카드를 누르면 숫자만큼 자동 전진합니다. 필요하면 앞/뒤 버튼으로 위치를 수정하세요.",
+    turnCardConsumed:false,
+    turnSkillGuided:false,
+    gameEnded:false
+  };
+}
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}
+  return arr;
+}
+function deepClone(v){return JSON.parse(JSON.stringify(v))}
+function saveHistory(){
+  undoStack.push(deepClone(state));
+  if(undoStack.length>120) undoStack.shift();
+  redoStack=[];
+}
+function persist(){
+  localStorage.setItem("middle_runner_manual_v1",JSON.stringify(state));
+}
+function restore(){
+  try{
+    const saved=JSON.parse(localStorage.getItem("middle_runner_manual_v1"));
+    if(saved && saved.players && saved.players.length===10){state=saved;return true}
+  }catch(e){}
+  return false;
+}
+function getSkill(id){return SKILLS.find(s=>s.id===id)}
+function openOverlay(id){document.getElementById(id).classList.add("open")}
+function closeOverlay(id){document.getElementById(id).classList.remove("open")}
+function toast(msg){
+  const el=document.getElementById("toast");el.textContent=msg;el.classList.add("show");
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),1900)
+}
+function runnerSvg(color){
+  return `<svg viewBox="0 0 64 64" aria-hidden="true">
+    <path d="M12 43c11-2 18-12 20-25l9 7-4 8 14 6c5 2 4 8 0 10-13 7-28 7-39-6Z" fill="#fff"/>
+    <path d="M32 19l9 7-4 7 13 6" fill="none" stroke="${color}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M15 45c11 4 25 4 36-2" fill="none" stroke="${color}" stroke-width="5" stroke-linecap="round"/>
+    <path d="M11 52h43" stroke="#071522" stroke-width="6" stroke-linecap="round"/>
+  </svg>`;
+}
+function pushLog(text){
+  const time=new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  state.logs.push(`[${time}] ${text}`);
+  if(state.logs.length>300) state.logs.shift();
+}
+function rankings(){
+  return [...state.players].sort((a,b)=>{
+    const ag=a.goalOrder!==null, bg=b.goalOrder!==null;
+    if(ag && bg) return a.goalOrder-b.goalOrder;
+    if(ag) return -1;
+    if(bg) return 1;
+    return b.position-a.position || a.id-b.id;
+  });
+}
+function finalGrade(rank){
+  if(rank===5||rank===6)return 1;
+  if(rank===4||rank===7)return 2;
+  if(rank===3||rank===8)return 3;
+  if(rank===2||rank===9)return 4;
+  return 5;
+}
+function render(){
+  renderLanes();renderTurn();renderRank();renderLog();
+  document.getElementById("undoBtn").disabled=undoStack.length===0;
+  document.getElementById("redoBtn").disabled=redoStack.length===0;
+  persist();
+}
+function renderLanes(){
+  const box=document.getElementById("lanes");box.innerHTML="";
+  state.players.forEach((p,idx)=>{
+    const sk=getSkill(p.skillId);
+    const row=document.createElement("div");
+    row.className="lane-row"+(state.currentTurn===idx?" active":"");
+    const percent=Math.max(0,Math.min(100,(p.position/GOAL)*100));
+    row.innerHTML=`
+      <div class="team-meta">
+        <div class="team-badge" style="background:${TEAM_COLORS[idx]}">${p.id}</div>
+        <div class="team-lines">
+          <div class="team-name">${escapeHtml(p.name)}</div>
+          <div class="team-skill">${sk.icon} ${sk.name} · ${sk.sub}</div>
+          <div class="mini-cards" title="남은 이동 카드">
+            ${[1,2,3,4].map(n=>`<span class="mini-card ${p.cards.includes(n)?"":"used"}">${n}</span>`).join("")}
+          </div>
+        </div>
+      </div>
+      <div class="track" onclick="selectTeam(${idx})">
+        <div class="runner ${p.goalOrder!==null?"goal":""}" style="left:${percent}%;background:${TEAM_COLORS[idx]}">
+          ${runnerSvg(TEAM_COLORS[idx])}
+          <div class="pos-label">${p.position}칸${p.goalOrder!==null?` · ${p.goalOrder}착`:``}</div>
+        </div>
+      </div>
+      <div class="manual-controls">
+        <button class="move-btn back" onclick="manualMove(${idx},-1)">◀ 뒤로</button>
+        <button class="move-btn forward" onclick="manualMove(${idx},1)">앞으로 ▶</button>
+        <div class="finish-chip">${p.goalOrder!==null?`🏁 ${p.goalOrder}번째 골인`:""}</div>
+      </div>`;
+    box.appendChild(row);
+  })
+}
+function renderTurn(){
+  const p=state.players[state.currentTurn],sk=getSkill(p.skillId);
+  document.getElementById("currentTeam").textContent=`${p.id}. ${p.name}`;
+  document.getElementById("currentSkill").textContent=`${sk.icon} ${sk.name} — ${sk.sub}`;
+  document.getElementById("currentSkillDesc").textContent=sk.desc;
+  if(typeof state.turnCardConsumed!=="boolean") state.turnCardConsumed=false;
+  if(typeof state.turnSkillGuided!=="boolean") state.turnSkillGuided=false;
+  const skillBtn=document.getElementById("skillGuideBtn");
+  skillBtn.disabled=state.turnSkillGuided||state.turnCardConsumed||p.goalOrder!==null||state.gameEnded;
+  skillBtn.textContent=state.turnSkillGuided?"✓ 능력 안내 확인":"⚡ 초능력 안내";
+  const resetBtn=document.getElementById("manualResetBtn");
+  if(resetBtn) resetBtn.disabled=p.goalOrder!==null||state.gameEnded;
+  const row=document.getElementById("cardRow");row.innerHTML="";
+  [1,2,3,4].forEach(n=>{
+    const b=document.createElement("button");b.className="number-card"+(p.cards.includes(n)?"":" used");
+    b.textContent=n;b.disabled=!p.cards.includes(n)||state.turnCardConsumed||p.goalOrder!==null||state.gameEnded;
+    b.onclick=()=>askUseCard(n);row.appendChild(b)
+  })
+}
+function renderRank(){
+  const list=document.getElementById("rankList");list.innerHTML="";
+  rankings().forEach((p,i)=>{
+    const rank=i+1;
+    const item=document.createElement("div");
+    item.className="rank-item"+((rank===5||rank===6)?" middle":"");
+    item.innerHTML=`
+      <div class="rank-no">${rank}위</div>
+      <div class="rank-name">${escapeHtml(p.name)}</div>
+      <div class="rank-pos">${p.goalOrder!==null?`${p.goalOrder}착`:`${p.position}칸`}</div>`;
+    list.appendChild(item)
+  })
+}
+function renderLog(){
+  const log=document.getElementById("log");log.innerHTML=state.logs.map(x=>`<div class="log-entry">${escapeHtml(x)}</div>`).join("");
+  log.scrollTop=log.scrollHeight
+}
+function escapeHtml(v){return String(v).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function selectTeam(idx){
+  if(state.currentTurn===idx)return;
+  saveHistory();state.currentTurn=idx;
+  state.turnCardConsumed=false;
+  state.turnSkillGuided=false;
+  state.expectedText=`${state.players[idx].name} 팀을 선택했습니다. 카드 또는 초능력을 선택하세요.`;
+  pushLog(`🎯 현재 차례를 [${state.players[idx].name}] 팀으로 수동 변경했습니다.`);
+  render()
+}
+function manualMove(idx,delta){
+  if(state.gameEnded){toast("게임이 종료되었습니다. 실행 취소 또는 새 게임을 사용하세요.");return}
+  const p=state.players[idx];
+  if(delta<0 && p.position<=0){toast("출발선보다 뒤로 갈 수 없습니다.");return}
+  if(delta>0 && p.position>=GOAL){toast("이미 결승선에 도착했습니다.");return}
+  saveHistory();
+  const old=p.position;
+  p.position=Math.max(0,Math.min(GOAL,p.position+delta));
+  if(old<GOAL && p.position>=GOAL){
+    state.finishCounter++;
+    p.goalOrder=state.finishCounter;
+    p.finishSeq=Date.now()+idx/100;
+    pushLog(`🏁 [${p.name}] 팀이 ${p.goalOrder}번째로 골인했습니다.`);
+  }else if(old>=GOAL && p.position<GOAL){
+    p.goalOrder=null;p.finishSeq=null;
+    recalcGoalOrders();
+    pushLog(`↩ [${p.name}] 팀의 골인을 취소하고 ${p.position}칸으로 수정했습니다.`);
+  }else{
+    pushLog(`${delta>0?"▶":"◀"} [${p.name}] 팀을 ${delta>0?"앞으로":"뒤로"} 1칸 이동: ${old} → ${p.position}칸`);
+  }
+  if(state.finishCounter>=9 && !state.gameEnded){
+    state.gameEnded=true;
+    pushLog("🎉 9개 팀이 골인하여 게임이 종료되었습니다.");
+    render();showResult(true);return
+  }
+  render()
+}
+function recalcGoalOrders(){
+  const finishers=state.players.filter(p=>p.position>=GOAL && p.finishSeq!==null).sort((a,b)=>a.finishSeq-b.finishSeq);
+  finishers.forEach((p,i)=>p.goalOrder=i+1);
+  state.finishCounter=finishers.length
+}
+function askUseCard(n){
+  const p=state.players[state.currentTurn];
+  if(!p.cards.includes(n) || state.turnCardConsumed || p.goalOrder!==null || state.gameEnded)return;
+
+  saveHistory();
+  const old=p.position;
+  p.cards=p.cards.filter(c=>c!==n);
+  state.turnCardConsumed=true;
+  p.position=Math.min(GOAL,p.position+n);
+
+  if(old<GOAL && p.position>=GOAL){
+    state.finishCounter++;
+    p.goalOrder=state.finishCounter;
+    p.finishSeq=Date.now()+state.currentTurn/100;
+    pushLog(`🏁 [${p.name}] ${n}번 카드 사용으로 ${p.goalOrder}번째 골인했습니다.`);
+  }else{
+    pushLog(`🃏 [${p.name}] ${n}번 카드 소모 및 자동 이동: ${old} → ${p.position}칸`);
+  }
+
+  state.expectedText=`${p.name}: ${n}번 카드가 소모되고 ${n}칸 자동 전진했습니다. 필요하면 앞/뒤 버튼으로 수정하세요.`;
+
+  if(p.cards.length===0){
+    p.cards=[1,2,3,4];
+    pushLog(`🔄 [${p.name}] 카드 4장을 모두 사용하여 1·2·3·4가 자동 재충전되었습니다.`);
+    state.expectedText+=` 카드 4장을 모두 써서 새 카드 세트도 충전되었습니다.`;
+  }
+
+  if(state.finishCounter>=9 && !state.gameEnded){
+    state.gameEnded=true;
+    pushLog("🎉 9개 팀이 골인하여 게임이 종료되었습니다.");
+    render();
+    showResult(true);
+    return;
+  }
+
+  render()
+}
+function manualCardReset(){
+  const p=state.players[state.currentTurn];
+  if(p.goalOrder!==null || state.gameEnded)return;
+  saveHistory();
+  p.cards=[1,2,3,4];
+  state.turnCardConsumed=false;
+  state.expectedText=`${p.name} 팀의 이동 카드를 1·2·3·4로 수동 리셋했습니다.`;
+  pushLog(`🔄 [${p.name}] 이동 카드를 수동으로 1·2·3·4 재충전했습니다.`);
+  render();
+  toast("현재 팀의 카드를 리셋했습니다.")
+}
+function askConfirm(title,text,yes){
+  pendingConfirm=yes;
+  document.getElementById("confirmTitle").textContent=title;
+  document.getElementById("confirmText").style.whiteSpace="pre-line";
+  document.getElementById("confirmText").textContent=text;
+  document.getElementById("confirmYesBtn").onclick=()=>{
+    closeOverlay("confirmOverlay");const fn=pendingConfirm;pendingConfirm=null;if(fn)fn()
+  };
+  openOverlay("confirmOverlay")
+}
+function cancelConfirm(){pendingConfirm=null;closeOverlay("confirmOverlay")}
+function nextTurn(){
+  if(state.gameEnded)return;
+  saveHistory();
+  let idx=state.currentTurn,guard=0;
+  do{idx=(idx+1)%10;guard++}while(state.players[idx].goalOrder!==null&&guard<11);
+  state.currentTurn=idx;
+  state.turnCardConsumed=false;
+  state.turnSkillGuided=false;
+  state.expectedText=`${state.players[idx].name} 차례입니다. 카드는 숫자만큼 자동 이동하며, 초능력만 안내창이 열립니다.`;
+  pushLog(`➡ 다음 차례: [${state.players[idx].name}]`);
+  render()
+}
+function previousTurn(){
+  if(state.gameEnded)return;
+  saveHistory();
+  let idx=state.currentTurn,guard=0;
+  do{idx=(idx+9)%10;guard++}while(state.players[idx].goalOrder!==null&&guard<11);
+  state.currentTurn=idx;
+  state.turnCardConsumed=false;
+  state.turnSkillGuided=false;
+  state.expectedText=`${state.players[idx].name} 팀으로 이전 차례를 이동했습니다.`;
+  pushLog(`⬅ 차례를 [${state.players[idx].name}] 팀으로 되돌렸습니다.`);
+  render()
+}
+function openSkillGuide(){
+  const p=state.players[state.currentTurn],sk=getSkill(p.skillId);
+  if(p.goalOrder!==null){toast("골인한 팀은 초능력을 사용할 수 없습니다.");return}
+  if(state.turnCardConsumed){toast("카드 사용 전에 초능력 안내를 확인하세요. 실행 취소로 되돌릴 수 있습니다.");return}
+  if(state.turnSkillGuided){toast("이번 차례의 초능력 안내는 이미 확인했습니다.");return}
+  document.getElementById("skillModalTitle").textContent=`${sk.icon} ${p.name} — ${sk.name}`;
+  document.getElementById("skillModalText").textContent=`${sk.desc}\n\n진행 방법: ${sk.guide}`;
+  document.getElementById("skillModalText").style.whiteSpace="pre-line";
+  const area=document.getElementById("targetArea"),sel=document.getElementById("targetSelect");
+  area.style.display=sk.type==="target"?"block":"none";sel.innerHTML="";
+  if(sk.type==="target"){
+    state.players.filter(x=>x.id!==p.id&&x.goalOrder===null).forEach(x=>{
+      const o=document.createElement("option");o.value=x.id;o.textContent=`${x.id}. ${x.name} (${x.position}칸)`;sel.appendChild(o)
+    })
+  }
+  if(sk.id===9){
+    const extra=document.createElement("option");extra.value="self-reset";extra.textContent=`${p.name} 카드 즉시 재충전`;sel.innerHTML="";sel.appendChild(extra);area.style.display="block"
+  }
+  openOverlay("skillOverlay")
+}
+function confirmSkillGuide(){
+  const p=state.players[state.currentTurn],sk=getSkill(p.skillId);
+  let targetText="";
+  if(sk.type==="target"){
+    const target=state.players.find(x=>x.id===Number(document.getElementById("targetSelect").value));
+    if(target)targetText=` → 대상: ${target.name}`;
+  }
+  if(sk.id===9){
+    saveHistory();p.cards=[1,2,3,4];
+    state.turnSkillGuided=true;
+    pushLog(`🃏 [${p.name}] 트릭스터 안내 확인: 카드를 1·2·3·4로 수동 재충전했습니다.`);
+    state.expectedText=`트릭스터 적용 안내가 기록되었습니다. 이제 카드 1장을 선택해 소모하세요.`;
+  }else{
+    saveHistory();
+    state.turnSkillGuided=true;
+    pushLog(`${sk.icon} [${p.name}] ${sk.name} 능력 안내 확인${targetText}. 실제 효과는 진행자가 수동 처리합니다.`);
+    state.expectedText=`${sk.name} 안내 확인 완료. 화면 안내대로 말과 카드를 수동 처리하세요.`;
+  }
+  closeOverlay("skillOverlay");render()
+}
+function undo(){
+  if(!undoStack.length)return;
+  redoStack.push(deepClone(state));state=undoStack.pop();render();toast("이전 상태로 되돌렸습니다.")
+}
+function redo(){
+  if(!redoStack.length)return;
+  undoStack.push(deepClone(state));state=redoStack.pop();render();toast("다시 실행했습니다.")
+}
+function clearLog(){
+  askConfirm("기록 지우기","진행 기록만 지웁니다. 팀 위치와 카드는 그대로 유지됩니다.",()=>{
+    saveHistory();state.logs=[];pushLog("🧹 진행 기록을 정리했습니다.");render()
+  })
+}
+function openRules(){openOverlay("rulesOverlay")}
+function showResult(auto){
+  const ranked=rankings();
+  document.getElementById("resultTitle").textContent=auto?"🏁 게임 종료":"📊 현재 결과";
+  document.getElementById("resultSummary").textContent=`${state.finishCounter}개 팀 골인 · 현재 순위를 기준으로 중간 대칭 결과를 표시합니다.`;
+  const groups=[
+    {grade:1,ranks:[5,6],title:"👑 최종 공동 1등",win:true},
+    {grade:2,ranks:[4,7],title:"🥈 최종 공동 2등"},
+    {grade:3,ranks:[3,8],title:"🥉 최종 공동 3등"},
+    {grade:4,ranks:[2,9],title:"🏅 최종 공동 4등"},
+    {grade:5,ranks:[1,10],title:"⚠ 최종 공동 5등"}
+  ];
+  const grid=document.getElementById("resultGrid");grid.innerHTML="";
+  groups.forEach(g=>{
+    const div=document.createElement("div");div.className="result-group"+(g.win?" win":"");
+    const names=g.ranks.map(r=>ranked[r-1]?`${r}위 ${ranked[r-1].name}`:`${r}위 미정`).join(" · ");
+    div.innerHTML=`<div class="result-title">${g.title}</div><div class="result-teams">${escapeHtml(names)}</div>`;
+    grid.appendChild(div)
+  });
+  openOverlay("resultOverlay")
+}
+function openSetup(fromGame){
+  const grid=document.getElementById("setupGrid");grid.innerHTML="";
+  const source=state?state.players:defaultState().players;
+  setupSkills=source.map(p=>p.skillId);
+  source.forEach((p,i)=>{
+    const row=document.createElement("div");row.className="form-row";
+    row.innerHTML=`<label>팀 ${i+1}</label>
+      <input id="setupName${i}" value="${escapeHtml(p.name)}" maxlength="18">
+      <select id="setupSkill${i}" onchange="setupSkillChanged(${i})">
+        ${SKILLS.map(s=>`<option value="${s.id}" ${s.id===setupSkills[i]?"selected":""}>${s.icon} ${s.name} — ${s.sub}</option>`).join("")}
+      </select>`;
+    grid.appendChild(row)
+  });
+  document.getElementById("setupCancelBtn").style.display=fromGame?"inline-block":"none";
+  openOverlay("setupOverlay")
+}
+function setupSkillChanged(i){
+  const chosen=Number(document.getElementById(`setupSkill${i}`).value);
+  const other=setupSkills.findIndex((v,idx)=>idx!==i&&v===chosen);
+  if(other>=0){
+    const old=setupSkills[i];setupSkills[other]=old;
+    document.getElementById(`setupSkill${other}`).value=old
+  }
+  setupSkills[i]=chosen
+}
+function shuffleSetupSkills(){
+  setupSkills=shuffle([...SKILLS.map(s=>s.id)]);
+  setupSkills.forEach((v,i)=>document.getElementById(`setupSkill${i}`).value=v);
+  toast("10개 초능력을 중복 없이 섞었습니다.")
+}
+function startGameFromSetup(){
+  const names=Array.from({length:10},(_,i)=>document.getElementById(`setupName${i}`).value.trim()||`팀 ${i+1}`);
+  const unique=new Set(setupSkills);
+  if(unique.size!==10){toast("초능력은 중복 없이 하나씩 배정되어야 합니다.");return}
+  state={
+    players:names.map((name,i)=>({id:i+1,name,skillId:setupSkills[i],position:0,cards:[1,2,3,4],goalOrder:null,finishSeq:null})),
+    currentTurn:0,finishCounter:0,logs:["🏁 새 게임이 시작되었습니다."],
+    expectedText:"카드를 누르면 숫자만큼 자동 전진합니다. 필요하면 앞/뒤 버튼으로 위치를 수정하세요.",
+    turnCardConsumed:false,turnSkillGuided:false,gameEnded:false
+  };
+  undoStack=[];redoStack=[];closeOverlay("setupOverlay");render()
+}
+window.addEventListener("keydown",e=>{
+  if(document.querySelector(".overlay.open"))return;
+  if(e.ctrlKey&&e.key.toLowerCase()==="z"){e.preventDefault();undo()}
+  else if(e.ctrlKey&&e.key.toLowerCase()==="y"){e.preventDefault();redo()}
+  else if(e.key==="ArrowRight")manualMove(state.currentTurn,1)
+  else if(e.key==="ArrowLeft")manualMove(state.currentTurn,-1)
+  else if(["1","2","3","4"].includes(e.key))askUseCard(Number(e.key))
+  else if(e.key==="Enter")nextTurn()
+});
+window.addEventListener("load",()=>{
+  if(!restore()){state=defaultState();render();openSetup(false)}
+  else{render();toast("이전 진행 상태를 불러왔습니다.")}
+});
+</script>
+</body>
+</html>

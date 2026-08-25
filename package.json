@@ -1,0 +1,6 @@
+{
+  "name": "devils-plan",
+  "private": true,
+  "description": "「데블스 플랜」 게임, 교실에서 따라하기 — 빌드 도구 없는 순수 정적 진행자 도구 모음",
+  "type": "module"
+}
