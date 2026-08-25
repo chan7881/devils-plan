@@ -192,5 +192,9 @@ export function spendTickets(tickets, a, b, kind) {
     (i === a || i === b) ? { ...t, [kind]: t[kind] - 1 } : { ...t });
 }
 
-/** 티켓 세트 추가 구입 비용. 「팀당 기존 보유 피스 2개로 티켓세트 추가 구입 가능(팀별 1회)」 */
-export const TICKET_SET_COST = 2;
+/**
+ * 티켓 세트 추가 지급은 **팀당 한 번**뿐이다.
+ * 원본에서는 보유 피스 2개를 내고 샀지만, 이 모음은 게임끼리 점수를 이어 붙이지 않아
+ * 피스가 없다. 그래서 비용 없이 진행자가 판단해 한 번 더 주는 것으로 바꿨다.
+ */
+export const TICKET_SET_LIMIT_PER_TEAM = 1;

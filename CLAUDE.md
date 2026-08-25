@@ -13,7 +13,7 @@
 
 ```
 index.html · styles.css   허브
-common/js/pieces.js       피스 배분 순수 로직 — 여러 게임이 공유
+common/js/rank.js         점수 → 등수 — 여러 게임이 공유
 common/js/tests.js · common/test.html
 <게임>/index.html          게임마다 한 폴더
 ```
@@ -33,6 +33,15 @@ common/js/tests.js · common/test.html
 (→ `--font-body` / `--font-display` 시스템 폰트 스택). 학교 망 차단·오프라인 때문이다.
 자체 호스팅은 Gamja Flower TTF가 12.6MB, woff2 서브셋이 369개라 포기했다.
 
+### 게임끼리 점수를 이어 붙이지 않는다 ★
+
+이 모음은 **한 번에 끝나는 이벤트**로 운영한다(2026-08-25 지시). 연수에서 쓰던
+피스(토큰) 제도 — 게임마다 순위에 따라 피스를 주고 그것을 누적하는 것 — 은 걷어냈다.
+각 게임 안에서 누가 잘했는지만 가리면 되므로 `common/js/rank.js`의 등수 판정만 남았다.
+
+**피스·토큰을 다시 넣지 말 것.** 원본 자료(`데블스 플랜 연수 피스 배분.hwp`)에 표가 있어
+그대로 옮기고 싶어지지만, 의도적으로 뺀 것이다.
+
 ### 폴더명은 ASCII 슬러그
 
 한글 경로는 URL이 퍼센트 인코딩돼 QR·주소 공유가 지저분해진다.
@@ -41,12 +50,11 @@ common/js/tests.js · common/test.html
 
 수식 계산·동물 조합 판정·순위 판정처럼 **정답이 정해져 있는 것**은 공통 규칙 2번의 7단계를
 그대로 적용한다. 특히 **변이 검사** — 일부러 버그를 되돌린 복제본에서 그 테스트가 실패하는지
-본다. `pieces.js`는 이미 두 가지 변이(`floor`→`ceil`, 동점조 피스 합산 제거)로 확인했고
-둘 다 5건씩 실패했다.
+본다. 각 게임의 `js/tests.js`는 이미 변이 검사를 거쳤다 (커밋 메시지에 무엇을 어떻게
+확인했는지 적혀 있다).
 
 규칙의 정본은 **G드라이브 원본**이다:
 `G:\다른 컴퓨터\내 컴퓨터\항도중학교자료\데블스 플랜 게임, 교실에서 따라하기1`
-- 피스 배분: `데블스 플랜 연수 피스 배분.hwp`
 - 각 게임 규칙: 게임별 폴더의 설명 PPT
 - 규칙 레이스 초능력 10종: `10대 고유 특수 능력 상세 설명(카드반드시사용버전).hwpx`
 
@@ -83,5 +91,5 @@ for (const x of r) if (!x.ok) console.log(x.label)"
 마지막에는 실제 화면을 눈으로 본다.
 
 ```bash
-curl -s https://chan7881.github.io/devils-plan/common/js/pieces.js | grep <바꾼_함수명>
+curl -s https://chan7881.github.io/devils-plan/common/js/rank.js | grep <바꾼_함수명>
 ```

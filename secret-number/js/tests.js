@@ -9,7 +9,6 @@ import {
   assignNumbers, countZerosBetween, computeClue, scoreGuesses,
   initialTickets, canContact, spendTickets, CARD_KINDS,
 } from './model.js';
-import { PIECE_TABLES, distributePieces } from '../../common/js/pieces.js';
 
 const results = [];
 function check(label, actual, expected) {
@@ -150,24 +149,6 @@ export function runAll() {
 
   check('자기 자신을 맞힌 건 패널티에 안 들어간다',
     scoreGuesses([10, 20], [[10, null], [null, null]])[0].penalty, 0);
-
-  /* ── 채점 → 피스 배분 (공용 로직과 이어 붙여 확인) ───────────── */
-
-  {
-    const secrets = [10, 20, 30, 40];
-    const rows = scoreGuesses(secrets, [
-      [10, 20, 30, 40],   // 12점
-      [10, 20, null, null], // 자기 −5? 아니: 1팀의 자기 번호는 20 → 맞힘 +5, 남(10) 맞힘 +1 = 6
-      [null, null, null, null], // 0
-      [99, 99, 99, 99],   // 자기 −5, 남 −3 = −8
-    ]);
-    const pieces = distributePieces(
-      rows.map((r) => ({ id: r.team, score: r.score })),
-      PIECE_TABLES['secret-number']);
-    check('점수 순으로 피스가 5·4·3·2',
-      pieces.map((p) => [p.id, p.pieces]),
-      [[0, 5], [1, 4], [2, 3], [3, 2]]);
-  }
 
   return results;
 }

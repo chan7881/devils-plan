@@ -1,13 +1,13 @@
 /**
  * 시크릿 넘버 — DOM을 만지는 유일한 파일.
- * 계산은 전부 model.js와 ../../common/js/pieces.js가 한다.
+ * 계산은 전부 model.js와 ../../common/js/rank.js가 한다.
  */
 import {
   CARD_KINDS, CARD_LABELS, CARD_DESCRIPTIONS,
   assignNumbers, computeClue, scoreGuesses,
-  initialTickets, canContact, spendTickets, TICKET_SET_COST,
+  initialTickets, canContact, spendTickets,
 } from './model.js';
-import { PIECE_TABLES, distributePieces } from '../../common/js/pieces.js';
+import { rankByScore } from '../../common/js/rank.js';
 
 const STORE_KEY = 'devils-plan.secret-number.v1';
 const $ = (id) => document.getElementById(id);
@@ -21,7 +21,6 @@ const defaultState = () => ({
   bucketSum: true,
   secrets: [],            // 팀별 고유번호 (아직 배정 전이면 빈 배열)
   tickets: [],            // 팀별 {add,mul,div,zero}
-  pieces: [],             // 팀별 보유 피스 (티켓 추가 구입에 쓴다)
   boughtSet: [],          // 팀별 추가 구입 여부 (팀당 1회)
   log: [],                // 단서 기록
   guesses: [],            // guesses[i][j]
@@ -50,7 +49,6 @@ function resizeTeams(n) {
   state.secrets = state.secrets.length ? keep(state.secrets, null) : [];
   state.tickets = keep(state.tickets.length ? state.tickets : initialTickets(n),
     Object.fromEntries(CARD_KINDS.map((k) => [k, 1])));
-  state.pieces = keep(state.pieces, 0);
   state.boughtSet = keep(state.boughtSet, false);
   state.guesses = Array.from({ length: n }, (_, i) =>
     Array.from({ length: n }, (_, j) => (state.guesses[i] ?? [])[j] ?? null));
@@ -322,7 +320,7 @@ function renderTickets() {
   const hr = document.createElement('tr');
   hr.append(th('팀', 'left'));
   for (const k of CARD_KINDS) hr.append(th(CARD_LABELS[k]));
-  hr.append(th('피스'), th('티켓 세트 추가'));
+  hr.append(th('티켓 세트 추가'));
   thead.append(hr);
   table.append(thead);
 
@@ -347,28 +345,13 @@ function renderTickets() {
       tr.append(cell);
     }
 
-    const pieceCell = document.createElement('td');
-    const pinp = document.createElement('input');
-    pinp.type = 'number';
-    pinp.min = '0';
-    pinp.value = String(state.pieces[i] ?? 0);
-    pinp.addEventListener('change', () => {
-      state.pieces[i] = Math.max(0, Number(pinp.value) || 0);
-      save();
-      renderTickets();
-    });
-    pieceCell.append(pinp);
-    tr.append(pieceCell);
-
     const buyCell = document.createElement('td');
     const btn = document.createElement('button');
     btn.className = 'small';
     const already = state.boughtSet[i];
-    const canAfford = (state.pieces[i] ?? 0) >= TICKET_SET_COST;
-    btn.textContent = already ? '구입함' : `피스 ${TICKET_SET_COST}개로 구입`;
-    btn.disabled = already || !canAfford;
+    btn.textContent = already ? '지급함' : '한 세트 더 주기';
+    btn.disabled = already;
     btn.addEventListener('click', () => {
-      state.pieces[i] -= TICKET_SET_COST;
       state.boughtSet[i] = true;
       for (const k of CARD_KINDS) state.tickets[i][k] = (state.tickets[i][k] ?? 0) + 1;
       save();
@@ -437,26 +420,23 @@ $('btnScore').addEventListener('click', () => {
     return;
   }
   const rows = scoreGuesses(state.secrets, state.guesses);
-  const pieces = distributePieces(
-    rows.map((r) => ({ id: r.team, score: r.score })),
-    PIECE_TABLES['secret-number']);
-  const pieceOf = Object.fromEntries(pieces.map((p) => [p.id, p]));
+  const ranked = rankByScore(rows.map((r) => ({ id: r.team, score: r.score })));
+  const rankOf = Object.fromEntries(ranked.map((p) => [p.id, p.rank]));
 
   const table = $('resultTable');
   table.innerHTML = '';
   const thead = document.createElement('thead');
   const hr = document.createElement('tr');
-  ['등수', '팀', '고유번호', '자기 번호', '다른 팀', '보너스', '패널티', '최종 점수', '피스']
+  ['등수', '팀', '고유번호', '자기 번호', '다른 팀', '보너스', '패널티', '최종 점수']
     .forEach((h, i) => hr.append(th(h, i === 1 ? 'left' : '')));
   thead.append(hr);
   table.append(thead);
 
   const tbody = document.createElement('tbody');
-  const sorted = [...rows].sort((a, b) => (pieceOf[a.team].rank - pieceOf[b.team].rank) || (b.score - a.score));
+  const sorted = [...rows].sort((a, b) => (rankOf[a.team] - rankOf[b.team]) || (b.score - a.score));
   for (const r of sorted) {
-    const p = pieceOf[r.team];
     const tr = document.createElement('tr');
-    tr.append(td(`${p.rank}등`));
+    tr.append(td(`${rankOf[r.team]}등`));
     tr.append(td(teamName(r.team), 'left'));
     tr.append(td(String(state.secrets[r.team])));
     tr.append(signed(r.self));
@@ -464,12 +444,8 @@ $('btnScore').addEventListener('click', () => {
     tr.append(signed(r.bonus));
     tr.append(signed(r.penalty));
     const sc = td(String(r.score));
-    sc.style.fontWeight = '800';
+    sc.style.cssText = 'font-weight:800;color:var(--accent)';
     tr.append(sc);
-    const pc = td(String(p.pieces));
-    pc.style.fontWeight = '800';
-    pc.style.color = 'var(--accent)';
-    tr.append(pc);
     tbody.append(tr);
   }
   table.append(tbody);

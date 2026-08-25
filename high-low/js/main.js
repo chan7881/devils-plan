@@ -1,11 +1,11 @@
 /**
  * 수식 하이로우 — DOM을 만지는 유일한 파일.
- * 계산·판정은 deck.js · formula.js · judge.js · ../../common/js/pieces.js 가 한다.
+ * 계산·판정은 deck.js · formula.js · judge.js · ../../common/js/rank.js 가 한다.
  */
 import { buildDeck, shuffle, dealToTeam, COLOR_LABELS, OP_LABELS } from './deck.js';
 import { evaluate, formulaText, formatValue, checkAgainstHand } from './formula.js';
 import { judgeRound } from './judge.js';
-import { PIECE_TABLES, distributePieces } from '../../common/js/pieces.js';
+import { rankByScore } from '../../common/js/rank.js';
 
 const STORE_KEY = 'devils-plan.high-low.v1';
 const $ = (id) => document.getElementById(id);
@@ -544,25 +544,24 @@ function renderResult() {
 
   const tt = $('totalTable');
   tt.innerHTML = '';
-  const pieces = distributePieces(
-    Array.from({ length: state.teamCount }, (_, i) => ({ id: i, score: state.totals[i] ?? 0 })),
-    PIECE_TABLES['high-low']);
-  const pieceOf = Object.fromEntries(pieces.map((p) => [p.id, p]));
+  const ranked = rankByScore(
+    Array.from({ length: state.teamCount }, (_, i) => ({ id: i, score: state.totals[i] ?? 0 })));
+  const rankOf = Object.fromEntries(ranked.map((p) => [p.id, p.rank]));
 
   const thead2 = document.createElement('thead');
   const hr2 = document.createElement('tr');
-  ['등수', '팀', '누적 점수', '가감', '피스'].forEach((h, i) => hr2.append(th(h, i === 1 ? 'left' : '')));
+  ['등수', '팀', '누적 점수', '가감'].forEach((h, i) => hr2.append(th(h, i === 1 ? 'left' : '')));
   thead2.append(hr2);
   tt.append(thead2);
 
   const tb2 = document.createElement('tbody');
-  const order = [...Array(state.teamCount).keys()].sort((a, b) => pieceOf[a].rank - pieceOf[b].rank);
+  const order = [...Array(state.teamCount).keys()].sort((a, b) => rankOf[a] - rankOf[b]);
   for (const i of order) {
     const tr = document.createElement('tr');
-    tr.append(td(`${pieceOf[i].rank}등`));
+    tr.append(td(`${rankOf[i]}등`));
     tr.append(td(teamName(i), 'left'));
     const sc = td(String(state.totals[i] ?? 0));
-    sc.style.fontWeight = '800';
+    sc.style.cssText = 'font-weight:800;color:var(--accent)';
     tr.append(sc);
 
     const adj = document.createElement('td');
@@ -578,10 +577,6 @@ function renderResult() {
       adj.append(b);
     }
     tr.append(adj);
-
-    const pc = td(String(pieceOf[i].pieces));
-    pc.style.cssText = 'font-weight:800;color:var(--accent)';
-    tr.append(pc);
     tb2.append(tr);
   }
   tt.append(tb2);
