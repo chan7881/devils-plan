@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>수식 하이로우 — 자체 검증</title>
+<link rel="stylesheet" href="../common/theme.css" />
+<link rel="stylesheet" href="../common/app.css" />
+<style>
+  #summary { font-size: 18px; font-weight: 800; padding: 14px 16px; border-radius: var(--dp-radius); border: 1px solid currentColor; }
+  #summary.pass { color: var(--ok); background: var(--ok-bg); }
+  #summary.fail { color: var(--bad); background: var(--bad-bg); }
+  ul { list-style: none; padding: 0; margin: 16px 0 0; border: 1px solid var(--border); border-radius: var(--dp-radius); overflow: hidden; }
+  li { padding: 9px 12px; border-bottom: 1px solid var(--border); font-size: 13px; background: var(--panel); }
+  li:last-child { border-bottom: none; }
+  li .mark { font-weight: 800; margin-right: 8px; font-size: 11px; }
+  li.ok .mark { color: var(--ok); }
+  li.no { color: var(--bad); }
+  li pre { margin: 6px 0 0; white-space: pre-wrap; font-size: 12px; font-family: var(--dp-font-mono); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="app-header">
+    <h1>수식 하이로우 — 자체 검증</h1>
+    <span class="sub">수식 계산 · 카드 배부 · 판정</span>
+    <span class="spacer"></span>
+    <a class="dp-backlink" href="./">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>게임으로
+    </a>
+  </div>
+  <div id="summary">돌리는 중…</div>
+  <ul id="list"></ul>
+</div>
+
+<script type="module">
+import { runAll } from './js/tests.js';
+
+const results = runAll();
+const failed = results.filter((r) => !r.ok);
+const s = document.getElementById('summary');
+s.className = failed.length === 0 ? 'pass' : 'fail';
+s.textContent = `통과 ${results.length - failed.length} / 실패 ${failed.length}`;
+
+const list = document.getElementById('list');
+for (const r of results) {
+  const li = document.createElement('li');
+  li.className = r.ok ? 'ok' : 'no';
+  const mark = document.createElement('span');
+  mark.className = 'mark';
+  mark.textContent = r.ok ? 'PASS' : 'FAIL';
+  li.append(mark);
+  const [first, ...rest] = r.label.split('\n');
+  li.append(document.createTextNode(first));
+  if (rest.length) {
+    const pre = document.createElement('pre');
+    pre.textContent = rest.join('\n');
+    li.append(pre);
+  }
+  list.append(li);
+}
+</script>
+</body>
+</html>
