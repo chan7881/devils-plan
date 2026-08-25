@@ -1,30 +1,28 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-dp-scheme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../common/theme.css">
 <title>중간 달리기 - 수동 진행자 버전</title>
 <style>
 :root{
-  --bg:#07111f;
-  --panel:#0e2035;
-  --panel2:#132b45;
-  --line:#284c6e;
-  --text:#f5fbff;
-  --muted:#9cc1d9;
+  --bg:var(--dp-bg);
+  --panel:var(--dp-panel);
+  --panel2:var(--dp-panel-2);
+  --line:var(--dp-border);
+  --text:var(--dp-text);
+  --muted:var(--dp-text-dim);
   --accent:#ffd166;
-  --green:#51e5a8;
-  --red:#ff6b7a;
+  --green:var(--dp-ok);
+  --red:var(--dp-bad);
   --blue:#56b4ff;
-  --shadow:0 16px 38px rgba(0,0,0,.28);
+  --shadow:var(--dp-shadow);
 }
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%;font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;background:var(--bg);color:var(--text)}
+html,body{margin:0;min-height:100%;font-family: var(--dp-font);background:var(--bg);color:var(--text)}
 body{
-  background:
-    radial-gradient(circle at 15% 0%,rgba(86,180,255,.18),transparent 30%),
-    radial-gradient(circle at 88% 5%,rgba(255,209,102,.13),transparent 28%),
-    linear-gradient(180deg,#06101d 0%,#0b1d31 100%);
+  background: var(--dp-bg);
   overflow-x:hidden;
 }
 button,select,input{font:inherit}
@@ -249,9 +247,23 @@ h1{font-size:26px;margin:0;letter-spacing:-1px}
   .sidebar{display:flex}.form-grid,.result-grid{grid-template-columns:1fr}
   .result-group.win{grid-column:auto}
 }
+
+/* ── 모바일 보강: 760px 최소폭이 폰에서 가로 스크롤을 만든다 ────────── */
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .board, .sidebar, .panel { min-width: 0; max-width: 100%; }
+  .stadium { overflow-x: auto; }
+  .small-actions { flex-wrap: wrap; }
+  .panel-title { flex-wrap: wrap; }
+}
+@media (max-width: 900px) {
+  button { min-height: 40px; }
+}
 </style>
 </head>
 <body>
+<a class="dp-backlink floating" href="../" aria-label="게임 목록으로 돌아가기"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>게임 목록</a>
+
 <div class="app">
   <header class="topbar">
     <div class="brand">

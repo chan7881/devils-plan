@@ -3,22 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../common/theme.css">
 <title>데블스 플랜 <기억의 조각></title>
 <style>
   :root {
-    /* 학교 망에서 외부 폰트가 막히거나 오프라인일 수 있어 시스템 한글 폰트를 쓴다.
-       Gamja Flower가 설치돼 있으면 그것을 먼저 쓴다. */
-    --font-body: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
-    --font-display: "Gamja Flower", "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
-    --bg-color: #f7f5f0;
-    --card-bg: #ffffff;
-    --primary: #5c88da;
-    --accent: #ff7675;
-    --success: #2ecc71;
-    --text-main: #2d3436;
-    --border-color: #dfe6e9;
-    --radius-lg: 24px;
-    --radius-md: 16px;
+    /* 색·글꼴·모서리는 common/theme.css의 --dp-* 에서 온다 (게임 모음 전체가 같은 값을 쓴다).
+       외부 폰트를 쓰지 않는다 — 학교 망 차단·오프라인 대비.
+       Gamja Flower가 기기에 설치돼 있으면 제목에만 먼저 쓴다. */
+    --font-body: var(--dp-font);
+    --font-display: "Gamja Flower", var(--dp-font);
+    --bg-color: var(--dp-bg);
+    --card-bg: var(--dp-panel);
+    --primary: var(--dp-accent);
+    --accent: var(--dp-warn);
+    --success: var(--dp-ok);
+    --text-main: var(--dp-text);
+    --border-color: var(--dp-border);
+    --radius-lg: var(--dp-radius-lg);
+    --radius-md: var(--dp-radius);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -103,7 +105,7 @@
     display: flex; justify-content: center; align-items: center;
     gap: 3vw; height: 12vh; width: 100%;
   }
-  .page-indicator { font-family: var(--font-display); font-size: 1.8rem; font-weight: bold; color: #7f8c8d; }
+  .page-indicator { font-family: var(--font-display); font-size: 1.8rem; font-weight: bold; color: var(--dp-text-dim); }
 
   /* ── 설정 창 스타일 ── */
   .setup-container { display: flex; flex-direction: column; gap: 2vh; width: 100%; height: 100%; overflow-y: auto; }
@@ -187,14 +189,14 @@
   .center-msg p { font-size: 1.6rem; color: #555; line-height: 1.5; }
 
   /* 질문 폰트 */
-  .quiz-q-box { font-family: var(--font-display); font-size: 3.8rem; text-align: center; margin: auto; line-height: 1.5; color: #2c3e50; padding: 0 20px; }
+  .quiz-q-box { font-family: var(--font-display); font-size: 3.8rem; text-align: center; margin: auto; line-height: 1.5; color: var(--dp-text); padding: 0 20px; }
 
   /* ── 정답확인 레이아웃 통합 구조 ── */
   .ans-full-view-container { width: 100%; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
   
   .ans-bottom-info-bar {
     height: 180px; 
-    background: #2c3e50; color: white; padding: 20px 30px; border-radius: 0 0 var(--radius-md) var(--radius-md);
+    background: var(--dp-text); color: white; padding: 20px 30px; border-radius: 0 0 var(--radius-md) var(--radius-md);
     display: flex; flex-direction: column; gap: 8px; box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
   }
   .ans-bottom-info-bar h4 { font-family: var(--font-display); font-size: 2.2rem; color: var(--accent); }
@@ -259,6 +261,8 @@
 </style>
 </head>
 <body>
+<a class="dp-backlink floating" href="../" aria-label="게임 목록으로 돌아가기"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>게임 목록</a>
+
 
 <div class="stage" id="slideStage"></div>
 
@@ -514,7 +518,7 @@
             <input type="file" id="setFileInput" accept="application/json,.json" style="display:none;" onchange="importSetFile(event)">
           </div>
           <button class="input-item" style="cursor:pointer;" onclick="exportSet()">💾 지금 설정을 세트 파일로 저장</button>
-          <p id="setMsg" style="font-size:0.8rem; color:#7f8c8d; margin-top:4px;"></p>
+          <p id="setMsg" style="font-size:0.8rem; color:var(--dp-text-dim); margin-top:4px;"></p>
         </div>
       </div>
     `;
@@ -551,7 +555,7 @@
     s3.innerHTML = `
       <div class="center-msg">
         <h1>준비완료! 🚀</h1>
-        <p style="margin-top:25px; font-weight:bold; color:#7f8c8d;">질문과 정답 구성이 모두 끝났습니다.</p>
+        <p style="margin-top:25px; font-weight:bold; color:var(--dp-text-dim);">질문과 정답 구성이 모두 끝났습니다.</p>
         <p style="color:var(--primary); font-weight:800; margin-top:15px; font-size:1.8rem;">다음 버튼을 누르면 이미지 집중 관찰이 시작됩니다.</p>
       </div>
     `;

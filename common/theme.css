@@ -1,0 +1,148 @@
+/* 데블스 플랜 게임 모음 — 공용 테마.
+ *
+ * 이 파일은 **토큰과 최소한의 공용 부품만** 담는다. 요소 선택자(button, table …)를
+ * 건드리지 않는다 — 이식해 온 앱들이 각자의 스타일을 갖고 있어서, 전역 리셋을 넣으면
+ * 조용히 망가진다.
+ *
+ * 쓰는 법: 각 앱이 이 파일을 불러온 뒤, 자기 변수를 --dp-* 로 이어 붙인다.
+ *   :root { --bg-color: var(--dp-bg); --card-bg: var(--dp-panel); ... }
+ *
+ * 색 규칙(공통 CLAUDE.md 3번): 라이트를 :root에 먼저 정의하고 다크는 덮어쓰기만 한다.
+ * 다크를 강제하는 앱은 <html data-dp-scheme="dark"> 를 쓴다.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  --dp-font: system-ui, -apple-system, "Segoe UI", "Malgun Gothic",
+             "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  --dp-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --dp-radius-sm: 8px;
+  --dp-radius: 12px;
+  --dp-radius-lg: 16px;
+
+  /* 중립색 — 모든 앱이 이걸 쓴다. 여기서 통일감이 나온다. */
+  --dp-bg: #f8fafc;
+  --dp-panel: #ffffff;
+  --dp-panel-2: #f1f5f9;
+  --dp-border: #e2e8f0;
+  --dp-border-strong: #cbd5e1;
+  --dp-text: #334155;
+  --dp-text-dim: #64748b;
+
+  /* 강조색 — 기본은 파랑. 게임마다 :root에서 덮어써도 된다. */
+  --dp-accent: #2563eb;
+  --dp-accent-text: #ffffff;
+  --dp-accent-bg: #eff6ff;
+
+  --dp-ok: #15803d;      --dp-ok-bg: #f0fdf4;
+  --dp-warn: #b45309;    --dp-warn-bg: #fffbeb;
+  --dp-bad: #b91c1c;     --dp-bad-bg: #fef2f2;
+
+  --dp-shadow: 0 4px 20px rgba(15, 23, 42, 0.10);
+  --dp-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.07);
+
+  /* 어두운 상단 바 — 라이트/다크 어느 쪽에서도 같은 색이다.
+     앱마다 헤더 색이 제각각이면 한 묶음으로 안 보인다. */
+  --dp-bar: #334155;
+  --dp-bar-2: #1e293b;
+  --dp-bar-text: #f8fafc;
+
+  /* 손가락으로 누를 수 있는 최소 크기 */
+  --dp-tap: 44px;
+}
+
+/* 다크 — 기기 설정을 따를 때 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-dp-scheme="light"]) {
+    --dp-bg: #0f172a;
+    --dp-panel: #1e293b;
+    --dp-panel-2: #172033;
+    --dp-border: #334155;
+    --dp-border-strong: #475569;
+    --dp-text: #e2e8f0;
+    --dp-text-dim: #94a3b8;
+
+    --dp-accent: #60a5fa;
+    --dp-accent-text: #0b1220;
+    --dp-accent-bg: #1e3a5f;
+
+    --dp-ok: #4ade80;    --dp-ok-bg: #14321f;
+    --dp-warn: #fbbf24;  --dp-warn-bg: #3a2c0a;
+    --dp-bad: #f87171;   --dp-bad-bg: #3a1414;
+
+    --dp-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+    --dp-shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* 다크 — 앱이 강제할 때 (바이러스 게임처럼 원래 어두운 화면인 것) */
+:root[data-dp-scheme="dark"] {
+  color-scheme: dark;
+  --dp-bg: #0f172a;
+  --dp-panel: #1e293b;
+  --dp-panel-2: #172033;
+  --dp-border: #334155;
+  --dp-border-strong: #475569;
+  --dp-text: #e2e8f0;
+  --dp-text-dim: #94a3b8;
+
+  --dp-accent: #60a5fa;
+  --dp-accent-text: #0b1220;
+  --dp-accent-bg: #1e3a5f;
+
+  --dp-ok: #4ade80;    --dp-ok-bg: #14321f;
+  --dp-warn: #fbbf24;  --dp-warn-bg: #3a2c0a;
+  --dp-bad: #f87171;   --dp-bad-bg: #3a1414;
+
+  --dp-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  --dp-shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* ── 공용 부품: 게임 목록으로 돌아가는 링크 ─────────────────────────
+   모든 게임 화면 맨 위에 같은 자리에 같은 모양으로 둔다. 앱마다 뒤로 갈 길이
+   없으면 폰에서 길을 잃는다. 클래스 이름을 dp-로 시작해 이식 앱의 CSS와 겹치지 않게 했다. */
+
+.dp-backlink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--dp-tap);
+  padding: 0 12px;
+  border: 1px solid var(--dp-border);
+  border-radius: var(--dp-radius-sm);
+  background: var(--dp-panel);
+  color: var(--dp-text-dim);
+  font-family: var(--dp-font);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  line-height: 1;
+}
+.dp-backlink:hover,
+.dp-backlink:focus-visible {
+  color: var(--dp-accent);
+  border-color: var(--dp-accent);
+  outline: none;
+}
+.dp-backlink svg { flex-shrink: 0; }
+
+/* 화면 왼쪽 위에 띄워 두는 형태 (자체 헤더가 없는 앱용) */
+.dp-backlink.floating {
+  position: fixed;
+  top: calc(8px + env(safe-area-inset-top));
+  left: calc(8px + env(safe-area-inset-left));
+  z-index: 9999;
+  box-shadow: var(--dp-shadow-sm);
+  min-height: 36px;
+  padding: 0 10px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+.dp-backlink.floating:hover { opacity: 1; }
+
+/* 모든 앱이 지켜야 할 최소 모바일 규칙 */
+@media (max-width: 560px) {
+  .dp-backlink.floating { min-height: 32px; font-size: 11px; padding: 0 8px; }
+}

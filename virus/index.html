@@ -1,20 +1,21 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-dp-scheme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../common/theme.css">
 <title>바이러스 게임</title>
 <style>
-  :root {
-    --bg: #0d0f14;
-    --bg2: #131720;
-    --surface: #1a1f2e;
-    --surface2: #222840;
+  :root{
+    --bg: var(--dp-bg);
+    --bg2: var(--dp-panel-2);
+    --surface: var(--dp-panel);
+    --surface2: var(--dp-panel-2);
     --surface3: #2a3050;
-    --border: #2e3650;
-    --border2: #3d4a6e;
-    --text: #e8ecf4;
-    --text-muted: #7a8ab0;
+    --border: var(--dp-border);
+    --border2: var(--dp-border-strong);
+    --text: var(--dp-text);
+    --text-muted: var(--dp-text-dim);
     --text-dim: #4a5680;
     --accent: #ff4757;        /* 빨강 - 위험 */
     --accent-glow: rgba(255,71,87,0.25);
@@ -30,16 +31,16 @@
     --dead-border: #2e3650;
     --alive-bg: rgba(26,188,156,0.08);
     --alive-border: #1abc9c;
-    --shadow: 0 4px 24px rgba(0,0,0,0.5);
-    --shadow-sm: 0 2px 12px rgba(0,0,0,0.4);
-    --radius: 12px;
-    --radius-sm: 8px;
+    --shadow: var(--dp-shadow);
+    --shadow-sm: var(--dp-shadow-sm);
+    --radius: var(--dp-radius);
+    --radius-sm: var(--dp-radius-sm);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+    font-family: var(--dp-font);
     background: var(--bg);
     color: var(--text);
     font-size: 14px;
@@ -935,9 +936,24 @@
   /* 섹션 헤더 아이콘 색상 */
   .section-header .sh-icon { opacity: 0.7; }
   .announce-none { font-size: 22px; font-weight: 700; opacity: 0.5; }
+
+/* ── 모바일 보강 (게임 모음 공통 규칙) ─────────────────────────── */
+@media (max-width: 640px) {
+  header { height: auto; padding: 8px 12px; flex-wrap: wrap; row-gap: 8px; }
+  .header-btn { white-space: normal; padding: 9px 12px; min-height: 40px; font-size: 12px; }
+  .main-tab-btn { min-height: 40px; }
+  body { font-size: 13px; }
+  /* 어떤 것도 화면 밖으로 나가지 않게 */
+  .container, .panel, .card, .board { max-width: 100%; }
+}
+@media (max-width: 640px) {
+  button { min-height: 40px; }
+}
 </style>
 </head>
 <body>
+<a class="dp-backlink floating" href="../" aria-label="게임 목록으로 돌아가기"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>게임 목록</a>
+
 
 <!-- HEADER -->
 <div id="header">

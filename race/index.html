@@ -3,35 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../common/theme.css">
     <title>중간 달리기 (Middle Runner) - 웹앱 게임</title>
     <style>
         :root {
-            --bg-color: #f0f2f5;
-            --card-bg: #ffffff;
-            --primary-color: #3b82f6;
-            --danger-color: #ef4444;
-            --success-color: #10b981;
-            --dark-color: #1e293b;
-            --accent-color: #f59e0b;
-            --text-color: #1e293b;
-            --text-muted: #64748b;
-            --border-color: #cbd5e1;
-            --track-bg: #f8fafc;
+            --bg-color: var(--dp-bg);
+            --card-bg: var(--dp-panel);
+            --primary-color: var(--dp-accent);
+            --danger-color: var(--dp-bad);
+            --success-color: var(--dp-ok);
+            --dark-color: var(--dp-text);
+            --accent-color: var(--dp-warn);
+            --text-color: var(--dp-text);
+            --text-muted: var(--dp-text-dim);
+            --border-color: var(--dp-border);
+            --track-bg: var(--dp-panel-2);
         }
 
         body.dark-mode {
-            --bg-color: #1a1e29;
-            --card-bg: #242b3d;
-            --text-color: #f1f5f9;
-            --text-muted: #94a3b8;
-            --border-color: #334155;
-            --track-bg: #1e2433;
+            --bg-color: var(--dp-bg);
+            --card-bg: var(--dp-panel);
+            --text-color: var(--dp-text);
+            --text-muted: var(--dp-text-dim);
+            --border-color: var(--dp-border);
+            --track-bg: var(--dp-panel-2);
         }
 
         * { box-sizing: border-box; }
 
         body {
-            font-family: 'Malgun Gothic', sans-serif;
+            font-family: var(--dp-font);
             background-color: var(--bg-color);
             margin: 0;
             padding: 10px;
@@ -56,7 +57,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: linear-gradient(135deg, #34495e, #2c3e50);
+            background: linear-gradient(135deg, var(--dp-bar), var(--dp-bar-2));
             padding: 10px 20px;
             border-radius: 8px;
             color: white;
@@ -64,7 +65,7 @@
         }
 
         body.dark-mode header {
-            background: linear-gradient(135deg, #1e293b, #0f172a);
+            background: linear-gradient(135deg, var(--dp-bar-2), #0f172a);
         }
 
         .header-title-area h1 { margin: 0; font-size: 20px; display: flex; align-items: center; gap: 8px; }
@@ -358,9 +359,30 @@
         .res-team-pill {
             padding: 2px 8px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 4px; font-weight: bold;
         }
-    </style>
+    
+        /* ── 모바일 (원본은 데스크톱 2단 고정이었다) ────────────────── */
+        @media (max-width: 860px) {
+            body { height: auto; overflow: auto; padding: 8px; }
+            .container { height: auto; grid-template-columns: 1fr; grid-template-rows: auto; }
+            header { flex-wrap: wrap; gap: 8px; padding: 10px 12px; }
+            .header-title-area h1 { font-size: 17px; }
+            .header-btn-group { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+            .header-btn-group button { flex: 1 1 auto; min-height: 40px; font-size: 12px; }
+            .board-section, .control-panel { min-height: 0; }
+            .track-container { max-height: 52vh; overflow-y: auto; }
+        }
+        /* 손가락으로 누르기 — 좁은 화면에서 버튼이 30px 아래로 내려가지 않게 */
+        @media (max-width: 860px) {
+            button, .skill-btn, .card-container > * { min-height: 40px; }
+        }
+
+        /* 모달 닫기 버튼이 손가락으로 누르기엔 너무 작았다 */
+        .modal-close-corner-btn { min-width: 40px; min-height: 40px; }
+</style>
 </head>
 <body>
+<a class="dp-backlink floating" href="../" aria-label="게임 목록으로 돌아가기"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>게임 목록</a>
+
 
 <div class="container">
     <header>
@@ -607,8 +629,20 @@
 
     function toggleThemeMode() {
         const isDark = document.body.classList.toggle("dark-mode");
+        // 색은 common/theme.css의 --dp-* 에서 오므로 <html>의 data-dp-scheme까지 같이 바꿔야
+        // 실제로 팔레트가 뒤집힌다. body의 class는 이 앱 고유의 규칙들이 계속 쓴다.
+        document.documentElement.setAttribute("data-dp-scheme", isDark ? "dark" : "light");
         document.getElementById("themeToggleBtn").innerText = isDark ? "☀️ 라이트모드 켜기" : "🌓 다크모드 켜기";
     }
+
+    // 기기가 다크 모드면 버튼 표시와 body class를 처음부터 맞춰 둔다.
+    (function syncInitialTheme() {
+        if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            document.body.classList.add("dark-mode");
+            const btn = document.getElementById("themeToggleBtn");
+            if (btn) btn.innerText = "☀️ 라이트모드 켜기";
+        }
+    })();
 
     function updateToggleNoticeText() {
         const chk = document.getElementById("sameCellSkillToggle").checked;

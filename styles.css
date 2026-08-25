@@ -1,38 +1,19 @@
 /* 데블스 플랜 게임 모음 — 허브.
-   circuit 리포와 같은 시각 언어·모바일 규격을 따른다.
-   색은 반드시 :root에 라이트를 먼저 정의하고, 다크는 덮어쓰기만 한다. */
+   색·글꼴·모서리는 common/theme.css의 --dp-* 토큰 하나에서 온다. 여기서는 배치만 정한다. */
 
 :root {
-  color-scheme: light dark;
-  --bg: #f8fafc;
-  --panel: #ffffff;
-  --panel-2: #f1f5f9;
-  --border: #e2e8f0;
-  --text: #334155;
-  --text-dim: #64748b;
-  --accent: #2563eb;
-  --accent-bg: #eff6ff;
-  --ready: #15803d;
-  --ready-bg: #f0fdf4;
-  --soon: #b45309;
-  --soon-bg: #fffbeb;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f172a;
-    --panel: #1e293b;
-    --panel-2: #172033;
-    --border: #334155;
-    --text: #e2e8f0;
-    --text-dim: #94a3b8;
-    --accent: #60a5fa;
-    --accent-bg: #1e3a5f;
-    --ready: #4ade80;
-    --ready-bg: #14321f;
-    --soon: #fbbf24;
-    --soon-bg: #3a2c0a;
-  }
+  --bg: var(--dp-bg);
+  --panel: var(--dp-panel);
+  --panel-2: var(--dp-panel-2);
+  --border: var(--dp-border);
+  --text: var(--dp-text);
+  --text-dim: var(--dp-text-dim);
+  --accent: var(--dp-accent);
+  --accent-bg: var(--dp-accent-bg);
+  --ready: var(--dp-ok);
+  --ready-bg: var(--dp-ok-bg);
+  --soon: var(--dp-warn);
+  --soon-bg: var(--dp-warn-bg);
 }
 
 * { box-sizing: border-box; }
@@ -42,8 +23,7 @@ html, body {
   padding: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, "Segoe UI", "Malgun Gothic",
-               "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  font-family: var(--dp-font);
   -webkit-tap-highlight-color: transparent;
   line-height: 1.6;
 }
@@ -203,7 +183,12 @@ footer {
   color: var(--text-dim);
 }
 
-footer a { color: var(--accent); }
+footer a {
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--dp-tap);
+}
 
 @media (max-width: 480px) {
   .wrap { padding: 16px 12px 40px; }

@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../common/theme.css">
     <title>중간 달리기 (Middle Runner) - 웹앱 게임</title>
     <style>
         :root {
-            --bg-color: #f0f2f5;
-            --primary-color: #4a90e2;
-            --danger-color: #e24a4a;
-            --success-color: #2ecc71;
-            --dark-color: #2c3e50;
-            --accent-color: #f1c40f;
+            --bg-color: var(--dp-bg);
+            --primary-color: var(--dp-accent);
+            --danger-color: var(--dp-bad);
+            --success-color: var(--dp-ok);
+            --dark-color: var(--dp-text);
+            --accent-color: var(--dp-warn);
         }
 
         body {
-            font-family: 'Malgun Gothic', sans-serif;
+            font-family: var(--dp-font);
             background-color: var(--bg-color);
             margin: 0;
             padding: 20px;
@@ -257,9 +258,26 @@
             width: 100%;
             border-radius: 5px;
         }
-    </style>
+    
+        /* ── 모바일 (원본은 데스크톱 2단 고정) ─────────────────────── */
+        @media (max-width: 860px) {
+            body { padding: 8px; }
+            .container { grid-template-columns: 1fr; gap: 12px; }
+            header { grid-column: span 1; padding: 12px; }
+            header h1 { font-size: 18px; }
+            .rule-summary { font-size: 12px; }
+            .status-section { gap: 12px; }
+            .container > * { min-width: 0; }
+            table { font-size: 12px; }
+        }
+        @media (max-width: 860px) {
+            button { min-height: 40px; }
+        }
+</style>
 </head>
 <body>
+<a class="dp-backlink floating" href="../" aria-label="게임 목록으로 돌아가기"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>게임 목록</a>
+
 
 <div class="container">
     <header>
