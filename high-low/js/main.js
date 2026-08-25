@@ -86,7 +86,13 @@ for (const [id, key, num] of [['targetHigh', 'targetHigh', true], ['targetLow', 
     save();
   });
 }
-$('onlineDeal').addEventListener('change', () => { state.onlineDeal = $('onlineDeal').checked; save(); renderDeal(); });
+$('onlineDeal').addEventListener('change', () => {
+  state.onlineDeal = $('onlineDeal').checked;
+  save();
+  // ② 배부 화면과 ③ 제출 화면이 둘 다 이 값에 따라 달라진다 — 둘 다 다시 그린다
+  renderDeal();
+  renderBuilder();
+});
 $('checkColor').addEventListener('change', () => { state.checkColor = $('checkColor').checked; save(); renderBuilder(); });
 
 $('btnReset').addEventListener('click', () => {
@@ -139,10 +145,10 @@ function notice(id, kind, text) {
   el.textContent = text;
 }
 
-function cardTile(card, { onClick = null, disabled = false, isHidden = false } = {}) {
+function cardTile(card, { onClick = null, disabled = false, isHidden = false, showColor = true } = {}) {
   const b = document.createElement('button');
   b.type = 'button';
-  b.className = 'card-tile ' + (card.type === 'number' ? `c-${card.color}` : 'c-op');
+  b.className = 'card-tile ' + (card.type === 'number' && showColor ? `c-${card.color}` : 'c-op');
   if (isHidden) b.classList.add('hidden-card');
   b.disabled = !!disabled;
 
@@ -152,7 +158,8 @@ function cardTile(card, { onClick = null, disabled = false, isHidden = false } =
 
   const sub = document.createElement('span');
   sub.className = 'cname';
-  sub.textContent = card.type === 'number' ? COLOR_LABELS[card.color] : '';
+  // 실물 카드 모드에서는 색을 따지지 않으므로 색 이름을 붙이지 않는다
+  sub.textContent = (card.type === 'number' && showColor) ? COLOR_LABELS[card.color] : '';
   b.append(sub);
 
   if (onClick) b.addEventListener('click', onClick);
@@ -253,6 +260,20 @@ function renderBuilder() {
   // 배부된 카드 (온라인 배부일 때만 눌러서 넣을 수 있다)
   const handWrap = $('handCards');
   handWrap.innerHTML = '';
+
+  // 온라인 배부 모드인데 아직 안 배부했다면, 0~10을 늘어놓는 대신 안내를 띄운다.
+  // (안 그러면 진행자가 배부한 줄 알고 그대로 진행하게 된다 — QA에서 잡은 문제)
+  if (state.onlineDeal && !hand) {
+    const p = document.createElement('p');
+    p.className = 'notice warn';
+    p.textContent = '아직 카드를 배부하지 않았습니다. ② 카드 배부에서 먼저 나눠 주세요.';
+    handWrap.append(p);
+    renderStrip();
+    renderDeclaration();
+    renderEval();
+    return;
+  }
+
   if (state.onlineDeal && hand) {
     const used = new Map();
     for (const t of curTokens()) {
@@ -274,10 +295,10 @@ function renderBuilder() {
       handWrap.append(cardTile({ type: 'op', op }, { onClick: () => insertToken({ type: 'op', op }), disabled }));
     }
   } else {
-    // 실물 카드 모드 — 0~10과 연산자를 자유롭게 누른다
+    // 실물 카드 모드 — 0~10과 연산자를 자유롭게 누른다. 색은 따지지 않는다.
     for (let v = 0; v <= 10; v++) {
       handWrap.append(cardTile({ type: 'number', value: v, color: 'red' },
-        { onClick: () => insertToken({ type: 'number', value: v, color: 'red' }) }));
+        { showColor: false, onClick: () => insertToken({ type: 'number', value: v, color: 'red' }) }));
     }
     const sep = document.createElement('span');
     sep.style.cssText = 'width:1px;align-self:stretch;background:var(--border);margin:0 4px';
@@ -320,7 +341,7 @@ function renderStrip() {
     const t = toks[i];
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'tok ' + (t.type === 'number' ? `c-${t.color}` : 'c-op');
+    b.className = 'tok ' + (t.type === 'number' && state.onlineDeal ? `c-${t.color}` : 'c-op');
     if (selectedTok === i) b.classList.add('selected');
     b.textContent = t.type === 'number' ? String(t.value) : OP_LABELS[t.op];
     b.addEventListener('click', () => { caret = i + 1; selectedTok = i; renderStrip(); });
@@ -503,11 +524,16 @@ $('btnJudge').addEventListener('click', () => {
       lowValue: s.declaration === 'swing' ? evalOf(s.low) : evalOf(s.high),
     });
   }
+  if (submissions.every((s) => s.declaration === null)) {
+    notice('judgeMsg', 'warn', '제출한 팀이 하나도 없습니다. ③ 수식 제출에서 먼저 저장하세요.');
+    return;
+  }
   const rows = judgeRound(submissions, { targetHigh: state.targetHigh, targetLow: state.targetLow });
   state.roundRows = rows;
   for (const r of rows) state.totals[r.id] = (state.totals[r.id] ?? 0) + r.points;
   save();
-  notice('judgeMsg', 'ok', `${state.round}라운드를 판정해 누적 점수에 더했습니다.`);
+  const n = submissions.filter((s) => s.declaration !== null).length;
+  notice('judgeMsg', 'ok', `${state.round}라운드를 판정했습니다 (제출 ${n}팀 / 전체 ${state.teamCount}팀).`);
   renderResult();
 });
 

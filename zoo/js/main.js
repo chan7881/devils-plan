@@ -4,9 +4,10 @@
  */
 import {
   ANIMALS, ANIMAL_LABELS, ANIMAL_SHORT,
-  boardSizeForRounds, emptyBoard, makeBag, drawFromBag,
+  boardSizeForRounds, emptyBoard, makeBagForRounds, drawFromBag,
   dropTile, removeTile, countFilled, scoreTeam,
-  makeComboDeck, drawCombo,
+  makeComboDeckForTeams, drawCombo,
+  TILES_DRAWN_PER_ROUND, COMBO_SIZE,
 } from './board.js';
 
 const STORE_KEY = 'devils-plan.zoo.v1';
@@ -23,8 +24,8 @@ const defaultState = () => ({
   round: 1,
   started: false,
   board: emptyBoard(5),
-  bagA: makeBag(),
-  bagB: makeBag(),
+  bagA: makeBagForRounds(5),
+  bagB: makeBagForRounds(5),
   drawnA: [],   // [{animal, revealed, used}]
   drawnB: [],
   teams: [],    // [{combo:[], publicIdx, credits, bonus}]
@@ -73,10 +74,15 @@ function syncInputs() {
 function updateSetupSummary() {
   const rounds = Number($('rounds').value) || 5;
   const n = Number($('teamCount').value) || 6;
+  const credits = Number($('credits').value) || 0;
   const size = boardSizeForRounds(rounds);
+  const perBag = makeBagForRounds(rounds).length;
+  const deckSize = makeComboDeckForTeams(n).length;
+  const placed = TILES_DRAWN_PER_ROUND * rounds; // 매 라운드 낙찰된 조 4개만 판에 놓인다
   $('setupSummary').textContent =
-    `${size} × ${size} 게임판 (총 ${size * size}칸) · 총 타일 40개 (A 20 / B 20) · ` +
-    `총 필요 크레딧 ${n} × ${Number($('credits').value) || 0} = ${n * (Number($('credits').value) || 0)}개`;
+    `${size} × ${size} 게임판 (총 ${size * size}칸) · ` +
+    `타일 ${perBag * 2}개 (A ${perBag} / B ${perBag}) — ${rounds}라운드 동안 ${placed}개가 판에 놓입니다 · ` +
+    `조합 덱 ${deckSize}장 · 총 필요 크레딧 ${n} × ${credits} = ${n * credits}개`;
 }
 for (const id of ['teamCount', 'rounds', 'credits']) {
   $(id).addEventListener('input', updateSetupSummary);
@@ -94,6 +100,9 @@ $('btnStart').addEventListener('click', () => {
     ...defaultState(),
     teamCount: n, rounds, credits, size,
     board: emptyBoard(size),
+    // 주머니는 라운드 수에 맞춰 만든다 — 5라운드면 원본과 같은 20개다.
+    bagA: makeBagForRounds(rounds),
+    bagB: makeBagForRounds(rounds),
     started: true,
     teams: Array.from({ length: n }, () => ({ combo: [], publicIdx: null, credits, bonus: 0 })),
   };
@@ -113,7 +122,7 @@ $('btnReset').addEventListener('click', () => {
 
 $('btnDrawAll').addEventListener('click', () => {
   if (!state.started) { notice('teamMsg', 'warn', '① 설정에서 게임을 먼저 시작하세요.'); return; }
-  let deck = makeComboDeck();
+  let deck = makeComboDeckForTeams(state.teamCount);
   try {
     state.teams = state.teams.map((t) => {
       const { combo, rest } = drawCombo(deck);
@@ -223,12 +232,18 @@ function renderTeams() {
 
 $('btnDrawTiles').addEventListener('click', () => {
   if (!state.started) { notice('playMsg', 'warn', '① 설정에서 게임을 먼저 시작하세요.'); return; }
-  if (state.bagA.length < 4 || state.bagB.length < 4) {
-    notice('playMsg', 'bad', '주머니에 남은 타일이 4개보다 적습니다.');
+  if (state.bagA.length < TILES_DRAWN_PER_ROUND || state.bagB.length < TILES_DRAWN_PER_ROUND) {
+    notice('playMsg', 'bad',
+      `주머니에 남은 타일이 ${TILES_DRAWN_PER_ROUND}개보다 적습니다 ` +
+      `(A ${state.bagA.length} / B ${state.bagB.length}). ① 설정에서 라운드 수를 늘려 새로 시작하세요.`);
     return;
   }
-  const a = drawFromBag(state.bagA, 4);
-  const b = drawFromBag(state.bagB, 4);
+  if (state.drawnA.length || state.drawnB.length) {
+    notice('playMsg', 'warn', '이번 라운드 타일이 이미 나와 있습니다. 「다음 라운드」를 먼저 누르세요.');
+    return;
+  }
+  const a = drawFromBag(state.bagA, TILES_DRAWN_PER_ROUND);
+  const b = drawFromBag(state.bagB, TILES_DRAWN_PER_ROUND);
   state.bagA = a.rest; state.bagB = b.rest;
   state.drawnA = a.drawn.map((x) => ({ animal: x, revealed: false, used: false }));
   state.drawnB = b.drawn.map((x) => ({ animal: x, revealed: false, used: false }));

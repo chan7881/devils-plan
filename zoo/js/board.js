@@ -33,14 +33,33 @@ export function emptyBoard(size) {
   return Array.from({ length: size }, () => new Array(size).fill(null));
 }
 
+/** 매 라운드 각 주머니에서 뽑는 타일 수. 「각 주머니에서 4개씩 무작위 추첨됩니다」 */
+export const TILES_DRAWN_PER_ROUND = 4;
+
 /**
- * 주머니 하나를 만든다. 5종 × 4개 = 20개.
- * 「주머니 A와 B에 각각 5종류 동물이 4개씩(총 20개) 들어있습니다」
+ * 한 주머니에 담을 동물 1종당 개수를 정한다.
+ *
+ * 원본은 「주머니 A와 B에 각각 5종류 동물이 4개씩(총 20개)」인데, 이는 **5라운드 기준**이다
+ * (4개씩 5라운드 = 20개). 라운드를 더 길게 잡으면 주머니가 도중에 마른다.
+ * 그래서 라운드 수에 맞춰 종당 개수를 늘린다 — 5라운드면 정확히 원본과 같은 20개가 된다.
  */
-export function makeBag() {
+export function tilesPerAnimal(rounds) {
+  return Math.ceil((TILES_DRAWN_PER_ROUND * rounds) / ANIMALS.length);
+}
+
+/**
+ * 주머니 하나를 만든다. 기본은 5종 × 4개 = 20개 (원본, 5라운드 기준).
+ * @param {number} [perAnimal=4] 동물 1종당 개수
+ */
+export function makeBag(perAnimal = 4) {
   const bag = [];
-  for (const a of ANIMALS) for (let i = 0; i < 4; i++) bag.push(a);
+  for (const a of ANIMALS) for (let i = 0; i < perAnimal; i++) bag.push(a);
   return bag;
+}
+
+/** 라운드 수에 맞는 주머니. 5라운드면 원본과 같은 20개다. */
+export function makeBagForRounds(rounds) {
+  return makeBag(tilesPerAnimal(rounds));
 }
 
 /** 피셔-예이츠. rng를 받아 테스트에서 고정한다. */
@@ -171,10 +190,33 @@ export function scoreTeam(board, combo, bonus = 0) {
    「5종류 동물 각 6장씩(총 30장 덱) 중 뒤집어진 카드 3장을 고릅니다.
      다른 플레이어가 뽑은 카드는 제외됩니다」 */
 
-export function makeComboDeck() {
+/** 한 팀이 고르는 동물 수. 「뒤집어진 카드 3장을 고릅니다」 */
+export const COMBO_SIZE = 3;
+
+/**
+ * 조합 덱의 동물 1종당 장수를 정한다.
+ *
+ * 원본은 「5종류 동물 각 6장씩(총 30장)」인데 이는 **10팀 기준**이다(3장씩 10팀 = 30장).
+ * 팀이 더 많으면 덱이 모자라 아무도 조합을 못 받는다 — 팀 수에 맞춰 늘린다.
+ * 10팀 이하면 정확히 원본과 같은 30장이 된다.
+ */
+export function comboCardsPerAnimal(teamCount) {
+  return Math.max(6, Math.ceil((COMBO_SIZE * teamCount) / ANIMALS.length));
+}
+
+/**
+ * 조합 덱을 만든다. 기본은 5종 × 6장 = 30장 (원본, 10팀 기준).
+ * @param {number} [perAnimal=6] 동물 1종당 장수
+ */
+export function makeComboDeck(perAnimal = 6) {
   const deck = [];
-  for (const a of ANIMALS) for (let i = 0; i < 6; i++) deck.push(a);
+  for (const a of ANIMALS) for (let i = 0; i < perAnimal; i++) deck.push(a);
   return deck;
+}
+
+/** 팀 수에 맞는 조합 덱. 10팀 이하면 원본과 같은 30장이다. */
+export function makeComboDeckForTeams(teamCount) {
+  return makeComboDeck(comboCardsPerAnimal(teamCount));
 }
 
 /**

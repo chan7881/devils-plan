@@ -6,9 +6,10 @@
  * 결과 객체의 필드는 `label`이다.
  */
 import {
-  ANIMALS, boardSizeForRounds, emptyBoard, makeBag, shuffle, drawFromBag,
+  ANIMALS, boardSizeForRounds, emptyBoard, makeBag, makeBagForRounds, shuffle, drawFromBag,
   dropTile, removeTile, countFilled, findCombo, scoreTeam,
-  makeComboDeck, drawCombo,
+  makeComboDeck, makeComboDeckForTeams, drawCombo,
+  TILES_DRAWN_PER_ROUND, COMBO_SIZE,
 } from './board.js';
 
 const results = [];
@@ -49,13 +50,49 @@ export function runAll() {
 
   {
     const bag = makeBag();
-    check('주머니는 20개', bag.length, 20);
+    check('기본 주머니는 20개 (원본, 5라운드 기준)', bag.length, 20);
     check('5종이 각 4개씩', ANIMALS.map((a) => bag.filter((x) => x === a).length), [4, 4, 4, 4, 4]);
     const { drawn, rest } = drawFromBag(bag, 4, seeded(1));
     check('4개 뽑으면 4개', drawn.length, 4);
     check('주머니에 16개 남는다', rest.length, 16);
     check('원본 주머니는 그대로', bag.length, 20);
   }
+
+  /* ── 설정한 만큼 실제로 버티는가 ──────────────────────────────
+     QA에서 잡은 결함: 설정은 10라운드·12팀을 허용하는데 주머니(20개)와
+     조합 덱(30장)은 5라운드·10팀분뿐이었다. 6라운드째에 게임이 멈추고,
+     12팀이면 아무도 조합을 못 받았다. */
+
+  for (const rounds of [5, 6, 7, 8, 10]) {
+    let bag = makeBagForRounds(rounds);
+    let drawn = 0;
+    while (bag.length >= TILES_DRAWN_PER_ROUND) { bag = drawFromBag(bag, TILES_DRAWN_PER_ROUND).rest; drawn++; }
+    check(`${rounds}라운드 주머니가 ${rounds}라운드를 버틴다`, drawn >= rounds, true);
+  }
+  check('5라운드 주머니는 원본과 같은 20개', makeBagForRounds(5).length, 20);
+  check('5라운드 주머니는 딱 떨어진다 (남는 타일 없음)', (() => {
+    let bag = makeBagForRounds(5);
+    for (let i = 0; i < 5; i++) bag = drawFromBag(bag, TILES_DRAWN_PER_ROUND).rest;
+    return bag.length;
+  })(), 0);
+  check('주머니는 라운드가 길어도 5종이 고르게 들어간다', (() => {
+    const bag = makeBagForRounds(10);
+    const counts = ANIMALS.map((a) => bag.filter((x) => x === a).length);
+    return new Set(counts).size === 1;
+  })(), true);
+
+  for (const teams of [2, 6, 10, 11, 12]) {
+    let deck = makeComboDeckForTeams(teams);
+    let served = 0;
+    try { for (let i = 0; i < teams; i++) { deck = drawCombo(deck).rest; served++; } } catch (_) { /* 모자람 */ }
+    check(`${teams}팀에게 조합 3장씩 모두 배부된다`, served, teams);
+  }
+  check('10팀 이하면 원본과 같은 30장 덱', makeComboDeckForTeams(10).length, 30);
+  check('덱도 5종이 고르게 들어간다', (() => {
+    const deck = makeComboDeckForTeams(12);
+    return new Set(ANIMALS.map((a) => deck.filter((x) => x === a).length)).size === 1;
+  })(), true);
+  check('한 팀이 고르는 동물 수는 3', COMBO_SIZE, 3);
 
   /* ── 중력 배치 ──────────────────────────────────────────────── */
 
