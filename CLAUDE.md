@@ -48,7 +48,7 @@ common/js/tests.js · common/test.html
 
 ### 규칙이 틀리면 잘못 가르치는 것이다
 
-수식 계산·동물 조합 판정·순위 판정처럼 **정답이 정해져 있는 것**은 공통 규칙 2번의 7단계를
+수식 계산·동물 조합 판정·순위 판정처럼 **정답이 정해져 있는 것**은 공통 규칙 「화면이 과학과 어긋나면…」의 7단계를
 그대로 적용한다. 특히 **변이 검사** — 일부러 버그를 되돌린 복제본에서 그 테스트가 실패하는지
 본다. 각 게임의 `js/tests.js`는 이미 변이 검사를 거쳤다 (커밋 메시지에 무엇을 어떻게
 확인했는지 적혀 있다).
@@ -69,8 +69,11 @@ common/js/tests.js · common/test.html
 ### 브라우저 자동화로 확인할 때
 
 `virus/`와 `race/variant-middle2.html`은 `alert`/`confirm`을 쓴다.
-그냥 클릭하면 CDP가 멈춘다 — `window.confirm = () => true`, `window.alert = () => {}`로
-스텁을 씌우고 클릭한다 (자세한 것은 `~/.claude/CLAUDE.md`).
+- **agent-browser**(기본 도구): `alert`는 저절로 넘어간다. `confirm`은 띄운 뒤
+  `agent-browser dialog accept`(또는 `dismiss`)로 닫는다 — 열린 채 두면 그 탭이 멈춘다.
+- claude-in-chrome(예전 도구)으로 할 때는 그냥 클릭하면 CDP가 멈춘다 —
+  `window.confirm = () => true`, `window.alert = () => {}` 스텁을 먼저 씌운다
+  (`Desktop\Claude\브라우저_자동화.md` 「되돌릴 때만 — 이전 방식」).
 
 ## 테스트
 
@@ -87,7 +90,7 @@ for (const x of r) if (!x.ok) console.log(x.label)"
 ## 배포 확인
 
 번들이 아니라 파일을 그대로 올리므로 함수명으로 볼 수 있다.
-다만 공통 규칙 6번대로 **그 이름이 이번에 처음 생긴 것인지** 먼저 확인하고,
+다만 웹앱 규칙 「배포됐다고 말하기 전에」대로 **그 이름이 이번에 처음 생긴 것인지** 먼저 확인하고,
 마지막에는 실제 화면을 눈으로 본다.
 
 ```bash
