@@ -3,8 +3,8 @@
 「데블스 플랜」 게임, 교실에서 따라하기 연수 자료의 진행 프로그램을 웹으로 모은 것.
 배포: `https://chan7881.github.io/devils-plan/`
 
-> 공통 규칙(검증 절차)은 **`Desktop\Claude\CLAUDE.md`**, 교육 자료 규칙(결론을 미리 말하지 않기)은 **`Desktop\Claude\교육자료_규칙.md`**, 화면·배포·커밋 전 규칙은
-> **`Desktop\Claude\웹앱_규칙.md`**에 있다. 여기에는 이 리포에만 해당하는 것만 적는다.
+> 공통 규칙(검증 절차)은 **`Desktop\Claude\CLAUDE.md`**, 교육 자료 규칙(결론을 미리 말하지 않기)은 **`Desktop\Claude\규칙\교육자료_규칙.md`**, 화면·배포·커밋 전 규칙은
+> **`Desktop\Claude\규칙\웹앱_규칙.md`**에 있다. 여기에는 이 리포에만 해당하는 것만 적는다.
 
 ## 구조
 
@@ -73,7 +73,7 @@ common/js/tests.js · common/test.html
   `agent-browser dialog accept`(또는 `dismiss`)로 닫는다 — 열린 채 두면 그 탭이 멈춘다.
 - claude-in-chrome(예전 도구)으로 할 때는 그냥 클릭하면 CDP가 멈춘다 —
   `window.confirm = () => true`, `window.alert = () => {}` 스텁을 먼저 씌운다
-  (`Desktop\Claude\브라우저_자동화.md` 「되돌릴 때만 — 이전 방식」).
+  (`Desktop\Claude\운영\브라우저_자동화.md` 「되돌릴 때만 — 이전 방식」).
 
 ## 테스트
 
